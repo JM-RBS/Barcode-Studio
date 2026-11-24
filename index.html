@@ -1,87 +1,3580 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Barcode Studio</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jaymart Studio — สาขาโรบินสันสุรินทร์ ชั้น 2</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS & JsBarcode -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              100: '#ffe1e3',
+              200: '#ffc7cb',
+              300: '#ffa1a7',
+              400: '#f86f78',
+              500: '#eb3843',
+              600: '#cb1415',
+              700: '#ab0e10',
+              800: '#8e0f11',
+              900: '#751315',
+              950: '#420405'
+            }
+          }
         }
-        html, body {
-            width: 100%;
-            height: 100dvh;
-            overflow: hidden;
-            background-color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        iframe {
-            width: 100%;
-            height: 100dvh;
-            border: none;
-            display: block;
-        }
-        /* Loading Screen */
-        #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100dvh;
-            background-color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.4s ease, visibility 0.4s ease;
-        }
-        #loading.fade-out {
-            opacity: 0;
-            visibility: hidden;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #4f46e5; /* โทนสีอินดิโก/ม่วง สามารถปรับเปลี่ยนได้ */
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 12px;
-        }
-        .loading-text {
-            color: #334155;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+      }
+    };
+  </script>
+
+  <style>
+    * {
+      font-family: 'Plus Jakarta Sans', 'Kanit', 'Prompt', sans-serif;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #f8fafc;
+      color: #0f172a;
+      min-height: 100dvh;
+    }
+
+    .font-sarabun { font-family: 'Sarabun', sans-serif !important; }
+
+    /* PIN Input security without autofill */
+    .pin-input-masked {
+      -webkit-text-security: disc;
+    }
+
+    /* Shake Animation */
+    @keyframes modal-shake {
+      0%, 100% { transform: translateX(0); }
+      15%, 45%, 75% { transform: translateX(-7px); }
+      30%, 60%, 90% { transform: translateX(7px); }
+    }
+    .animate-shake { animation: modal-shake 0.35s ease-in-out !important; }
+
+    /* Sidebar Active State, Larger Typography & Hover-to-Expand Desktop Mode */
+    #app-sidebar {
+      transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease, box-shadow 0.22s ease;
+    }
+    #main-content-col {
+      transition: padding-left 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .side-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 13px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #334155;
+      transition: all 0.15s ease;
+      text-align: left;
+      position: relative;
+      white-space: nowrap;
+    }
+    .side-btn:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .side-btn.active {
+      background: #fff1f2;
+      color: #cb1415;
+      font-weight: 700;
+      box-shadow: inset 3.5px 0 0 #cb1415;
+    }
+
+    /* Desktop Collapsed Sidebar (Mini Icon Rail + Smooth Hover-to-Expand Overlay) */
+    @media (min-width: 1024px) {
+      #app-sidebar {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        width: 272px;
+        z-index: 45;
+      }
+      #main-content-col {
+        padding-left: 272px;
+      }
+      #app-shell.is-sidebar-collapsed #main-content-col {
+        padding-left: 76px;
+      }
+      #app-sidebar.sidebar-collapsed:not(.sidebar-hover-open) {
+        width: 76px;
+      }
+      #app-sidebar.sidebar-collapsed.sidebar-hover-open {
+        width: 272px;
+        box-shadow: 12px 0 32px rgba(15, 23, 42, 0.14);
+      }
+      #app-sidebar.sidebar-collapsed:not(.sidebar-hover-open) .side-hide-collapsed {
+        display: none !important;
+      }
+      #app-sidebar.sidebar-collapsed:not(.sidebar-hover-open) .side-show-collapsed {
+        display: flex !important;
+      }
+      #app-sidebar.sidebar-collapsed:not(.sidebar-hover-open) .side-brand-wrap {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+      }
+      #app-sidebar.sidebar-collapsed:not(.sidebar-hover-open) .side-btn {
+        justify-content: center;
+        padding: 11px 0;
+      }
+      #app-sidebar.sidebar-collapsed:not(.sidebar-hover-open) .side-btn.active {
+        box-shadow: none;
+        background: #ffe1e3;
+      }
+      #app-sidebar.sidebar-collapsed:not(.sidebar-hover-open) .side-group-divider {
+        display: block !important;
+      }
+      #app-sidebar.sidebar-collapsed:not(.sidebar-hover-open) .side-logout-btn {
+        padding-left: 0;
+        padding-right: 0;
+      }
+    }
+
+    /* Floating Sidebar Tooltip */
+    #sidebar-tooltip {
+      position: fixed;
+      z-index: 9998;
+      pointer-events: none;
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 11px;
+      border-radius: 9px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: opacity 0.14s ease, transform 0.14s ease;
+    }
+    #sidebar-tooltip.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    #sidebar-tooltip::before {
+      content: '';
+      position: absolute;
+      left: -5px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 5px 5px 5px 0;
+      border-style: solid;
+      border-color: transparent #0f172a transparent transparent;
+    }
+
+    /* ==================== BARCODE STUDIO STYLES ==================== */
+    .badge-oval-black {
+      display: inline-block !important;
+      background-color: #000000 !important;
+      color: #ffffff !important;
+      border: 1px solid #000000 !important;
+      border-radius: 9999px !important;
+      padding: 0px 5px !important;
+      font-weight: 800 !important;
+      font-size: 0.82em !important;
+      line-height: 1.2 !important;
+      margin: 0 1.5px !important;
+      vertical-align: baseline !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    .barcode-sticker-compact {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      border-radius: 6px;
+      transition: all 0.15s ease-in-out;
+    }
+    .barcode-sticker-compact:hover {
+      border-color: #cb1415;
+      box-shadow: 0 4px 12px rgba(203, 20, 21, 0.12);
+    }
+
+    .barcode-sticker-print {
+      width: 55mm !important;
+      max-width: 55mm !important;
+      height: 20mm !important;
+      max-height: 20mm !important;
+      border: 0.9px solid #0f172a !important;
+      background: #ffffff !important;
+      box-shadow: none !important;
+      border-radius: 2px !important;
+      padding: 0.6mm 1.2mm !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+      margin: 0 auto !important;
+    }
+
+    /* ==================== LOCK PHONE A4 PREVIEW ==================== */
+    .sheet-a4-preview {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+      margin: 0 auto 24px auto;
+      padding: 12mm 16mm;
+      box-sizing: border-box;
+      display: block;
+      font-family: 'Sarabun', sans-serif !important;
+    }
+    .print-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-family: 'Sarabun', sans-serif !important;
+    }
+    .print-table th, .print-table td {
+      border: 1px solid #000000;
+      font-family: 'Sarabun', sans-serif !important;
+    }
+
+    /* ==================== COVER SHEET A4 SLIP ==================== */
+    .a4-page {
+      width: 210mm;
+      height: 297mm;
+      background: #ffffff;
+      padding: 7mm 8mm;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      page-break-after: always;
+      break-after: page;
+    }
+    .a4-page:last-child { page-break-after: auto; break-after: auto; }
+    .slip-slot {
+      height: 137mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .cut-line {
+      height: 8mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      color: #64748b;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 11px;
+    }
+    .cut-line::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      border-top: 1px dashed #94a3b8;
+    }
+    .cut-line span { position: relative; background: #ffffff; padding: 0 8px; }
+
+    .slip-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      color: #000000;
+      font-family: 'Sarabun', sans-serif;
+    }
+    .slip-table col.c-a { width: 7.2%; }
+    .slip-table col.c-b, .slip-table col.c-c, .slip-table col.c-d, .slip-table col.c-e,
+    .slip-table col.c-f, .slip-table col.c-g, .slip-table col.c-h, .slip-table col.c-i,
+    .slip-table col.c-j, .slip-table col.c-k { width: 9.28%; }
+    .slip-table td {
+      border: 1px solid #000000;
+      padding: 2px 4px;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 11pt;
+      font-weight: 700;
+      line-height: 1.25;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      height: 7.4mm;
+      font-family: 'Sarabun', sans-serif;
+    }
+    .slip-table td.bg-peach {
+      background-color: #FBE4D5 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .slip-table td.box-cell { font-size: 14pt; font-weight: 800; }
+    .slip-table td.big-val { font-size: 18pt; font-weight: 800; letter-spacing: 0.02em; }
+    .slip-table td.addr-cell { font-size: 10.5pt; font-weight: 700; height: 10.5mm; }
+    .slip-table td.label-sm { font-size: 10pt; font-weight: 700; }
+    .slip-table tr.spacer-row td { border: none; height: 2.2mm; padding: 0; }
+    .slip-table tr.sender-row td { border: none; height: 9mm; padding: 2px 4px; }
+    .slip-table td.sender-name { font-size: 17pt; font-weight: 800; }
+    .slip-table td.date-label { font-size: 11pt; font-weight: 700; text-align: right; padding-right: 6px; }
+    .slip-table td.date-val { font-size: 17pt; font-weight: 800; text-align: left; }
+
+    /* Print Mounts hidden on screen */
+    #print-area-barcode,
+    #print-area-lockphone,
+    #print-area-coversheet {
+      display: none;
+    }
+  </style>
+
+  <!-- Dynamic Print Orientation Style (switched automatically before window.print()) -->
+  <style id="dynamic-print-style"></style>
 </head>
-<body>
+<body class="min-h-screen antialiased selection:bg-brand-100 selection:text-brand-900">
 
-    <div id="loading">
-        <div class="spinner"></div>
-        <div class="loading-text">กำลังโหลด Barcode Studio...</div>
+  <!-- ==================== 1. SINGLE PIN LOCK SCREEN ==================== -->
+  <div id="pin-lock-screen" class="no-print fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="pin-lock-card" class="bg-white rounded-3xl max-w-sm w-full p-7 shadow-2xl border border-slate-200 text-center">
+      <div class="inline-flex items-center gap-2 p-1.5 pr-4 rounded-full bg-[#cb1415] text-white shadow-md mb-4">
+        <div class="bg-white px-2.5 py-0.5 rounded-full font-black text-[#cb1415] text-xs tracking-tight">Jaymart</div>
+        <span class="font-extrabold text-[11px] tracking-wider uppercase">MOBILE</span>
+      </div>
+
+      <h2 class="text-2xl font-extrabold text-slate-900 mb-1">Jaymart Studio</h2>
+      <p class="text-xs text-slate-500 mb-5">กรอกรหัส PIN</p>
+
+      <div id="pin-loading-state" class="hidden py-6">
+        <div class="w-9 h-9 border-4 border-brand-200 border-t-[#cb1415] rounded-full animate-spin mx-auto mb-3"></div>
+        <p id="pin-loading-text" class="text-xs font-semibold text-slate-600">กำลังตรวจสอบรหัส PIN...</p>
+      </div>
+
+      <form id="pin-login-form" onsubmit="event.preventDefault(); handlePinLogin();" class="space-y-4">
+        <input
+          type="text"
+          id="pin-input"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          maxlength="12"
+          placeholder="••••"
+          required
+          class="pin-input-masked w-full text-center tracking-[0.4em] text-2xl font-mono font-bold px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-[#cb1415] focus:ring-2 focus:ring-brand-100 outline-none text-slate-900 transition"
+        />
+
+        <p id="pin-error-msg" class="text-xs font-semibold text-rose-600 hidden"></p>
+
+        <button type="submit" class="w-full py-3 rounded-2xl bg-[#cb1415] hover:bg-brand-700 text-white font-bold text-sm shadow-md shadow-brand-600/20 transition-all">
+          🔓 เข้าสู่ระบบ
+        </button>
+      </form>
     </div>
+  </div>
 
-    <iframe 
-        id="appFrame" 
-        src="https://script.google.com/macros/s/AKfycby20TYbBuD0jCUvYhpDvVmOpJq_YI7xxvTOGx8ZgjN40Igq4yyCx7Bry0EiT2LtrMcL/exec?v=1" 
-        allow="fullscreen; camera; microphone; geolocation" 
-        onload="hideLoading()">
-    </iframe>
+  <!-- ==================== 2. APP SHELL WITH SIDEBAR ==================== -->
+  <div id="app-shell" class="no-print hidden min-h-screen flex bg-slate-50 is-sidebar-collapsed">
 
-    <script>
-        function hideLoading() {
-            const loading = document.getElementById('loading');
-            loading.classList.add('fade-out');
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-slate-900/50 z-40 hidden lg:hidden"></div>
+
+    <!-- LEFT SIDEBAR (Collapsible + Search Bar + Tooltips) -->
+    <aside id="app-sidebar" class="sidebar-collapsed fixed top-0 left-0 z-40 h-dvh w-[272px] bg-white border-r border-slate-200 flex flex-col transform -translate-x-full lg:translate-x-0 shrink-0 shadow-xl lg:shadow-none">
+      <!-- Brand Header -->
+      <div class="side-brand-wrap h-16 px-3.5 bg-[#cb1415] text-white flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2.5 cursor-pointer min-w-0" onclick="navigate('home')" data-tooltip="Jaymart Studio Hub — หน้าหลัก">
+          <div class="bg-white px-2.5 py-1 rounded-xl font-black text-[#cb1415] text-sm tracking-tight shadow-xs shrink-0">JM</div>
+          <div class="side-hide-collapsed min-w-0">
+            <div class="font-extrabold text-base leading-tight truncate">Jaymart Studio</div>
+            <div class="text-xs text-white/90 leading-none mt-0.5 truncate">โรบินสันสุรินทร์ ชั้น 2</div>
+          </div>
+        </div>
+
+        <!-- Mobile Close Button -->
+        <button onclick="toggleMobileSidebar(false)" class="lg:hidden w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-sm font-bold shrink-0">✕</button>
+      </div>
+
+      <!-- Sidebar Search Bar -->
+      <div class="p-3 pb-2 border-b border-slate-100 shrink-0">
+        <!-- Expanded Search Input -->
+        <div class="side-hide-collapsed relative">
+          <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input
+            type="text"
+            id="sidebar-search-input"
+            placeholder="ค้นหาเมนู..."
+            oninput="filterSidebarMenu(this.value)"
+            class="w-full pl-9 pr-8 py-2.5 rounded-xl bg-slate-100/90 border border-transparent focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-100 text-sm text-slate-800 outline-none transition"
+          />
+          <button id="sidebar-search-clear" type="button" onclick="clearSidebarSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-300 hover:bg-slate-400 text-white text-[10px] items-center justify-center leading-none">✕</button>
+        </div>
+        <!-- Collapsed Search Icon Button -->
+        <button type="button" onclick="expandAndFocusSearch()" data-tooltip="ค้นหาเมนู" class="side-show-collapsed hidden w-full h-9 rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-brand-600 text-slate-600 items-center justify-center transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </button>
+      </div>
+
+      <!-- Navigation Groups -->
+      <nav id="sidebar-nav" class="flex-1 overflow-y-auto p-2.5 space-y-4">
+        <div class="side-group">
+          <button id="side-home" onclick="navigate('home')" data-tooltip="หน้าหลักรวม (Dashboard)" data-search="หน้าหลัก รวม home dashboard" class="side-btn active">
+            <span class="flex items-center gap-2.5"><span class="text-xl leading-none">🏠</span><span class="side-hide-collapsed">หน้าหลักรวม</span></span>
+          </button>
+        </div>
+
+        <!-- Group 1: Barcode Studio -->
+        <div class="side-group">
+          <div class="side-hide-collapsed px-3 mb-1.5 text-xs font-extrabold text-slate-500 tracking-wide flex items-center justify-between">
+            <span>1. Barcode Studio</span>
+            <span id="side-badge-bc" class="hidden px-1.5 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[10px] font-bold">0</span>
+          </div>
+          <div class="side-group-divider hidden mx-3 my-2 border-t border-slate-200"></div>
+          <div class="space-y-1">
+            <button id="side-bc-generator" onclick="navigate('bc-generator')" data-tooltip="Barcode Studio — พิมพ์บาร์โค้ด A4" data-search="barcode บาร์โค้ด พิมพ์ สติกเกอร์ a4" class="side-btn">
+              <span class="flex items-center gap-2.5"><span class="text-xl leading-none">🖨️</span><span class="side-hide-collapsed">พิมพ์บาร์โค้ด A4</span></span>
+              <span id="side-dot-bc" class="side-show-collapsed hidden w-2 h-2 rounded-full bg-[#cb1415] absolute top-1.5 right-2.5"></span>
+            </button>
+            <button id="side-bc-master" onclick="navigate('bc-master')" data-tooltip="Barcode Studio — ข้อมูลไอเทม (Data)" data-search="barcode บาร์โค้ด ข้อมูล ไอเทม data สินค้า" class="side-btn">
+              <span class="flex items-center gap-2.5"><span class="text-xl leading-none">📋</span><span class="side-hide-collapsed">ข้อมูลไอเทม (Data)</span></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group 2: Lock Phone -->
+        <div class="side-group">
+          <div class="side-hide-collapsed px-3 mb-1.5 text-xs font-extrabold text-slate-500 tracking-wide flex items-center justify-between">
+            <span>2. ส่งกล่อง Lock Phone</span>
+            <span id="side-badge-lp" class="hidden px-1.5 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[10px] font-bold">0</span>
+          </div>
+          <div class="side-group-divider hidden mx-3 my-2 border-t border-slate-200"></div>
+          <div class="space-y-1">
+            <button id="side-lp-form" onclick="navigate('lp-form')" data-tooltip="ส่งกล่อง Lock Phone (สินเชื่อ RKB)" data-search="lock phone ส่งกล่อง rkb imei job บันทึก" class="side-btn">
+              <span class="flex items-center gap-2.5"><span class="text-xl leading-none">📦</span><span class="side-hide-collapsed">บันทึกส่งกล่อง RKB</span></span>
+              <span id="side-dot-lp" class="side-show-collapsed hidden w-2 h-2 rounded-full bg-[#cb1415] absolute top-1.5 right-2.5"></span>
+            </button>
+            <button id="side-lp-master" onclick="navigate('lp-master')" data-tooltip="Lock Phone — Data_สินค้า" data-search="lock phone data สินค้า ฐานข้อมูล rkb" class="side-btn">
+              <span class="flex items-center gap-2.5"><span class="text-xl leading-none">🗂️</span><span class="side-hide-collapsed">Data_สินค้า</span></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group 3: Cover Sheet Studio -->
+        <div class="side-group">
+          <div class="side-hide-collapsed px-3 mb-1.5 text-xs font-extrabold text-slate-500 tracking-wide flex items-center justify-between">
+            <span>3. ใบปะหน้าระหว่างสาขา</span>
+            <span id="side-badge-cs" class="hidden px-1.5 py-0.5 rounded-full bg-brand-100 text-brand-700 text-[10px] font-bold">0</span>
+          </div>
+          <div class="side-group-divider hidden mx-3 my-2 border-t border-slate-200"></div>
+          <div class="space-y-1">
+            <button id="side-cs-create" onclick="navigate('cs-create')" data-tooltip="ใบปะหน้าระหว่างสาขา — พิมพ์ใบปะหน้ากล่อง" data-search="cover sheet ใบปะหน้า กล่อง โอน สาขา tracking sts" class="side-btn">
+              <span class="flex items-center gap-2.5"><span class="text-xl leading-none">📄</span><span class="side-hide-collapsed">พิมพ์ใบปะหน้ากล่อง</span></span>
+              <span id="side-dot-cs" class="side-show-collapsed hidden w-2 h-2 rounded-full bg-[#cb1415] absolute top-1.5 right-2.5"></span>
+            </button>
+            <button id="side-cs-history" onclick="navigate('cs-history')" data-tooltip="ใบปะหน้าระหว่างสาขา — ประวัติ & พิมพ์ซ้ำ" data-search="cover sheet ประวัติ พิมพ์ซ้ำ log ใบปะหน้า history" class="side-btn">
+              <span class="flex items-center gap-2.5"><span class="text-xl leading-none">🕒</span><span class="side-hide-collapsed">ประวัติ &amp; พิมพ์ซ้ำ</span></span>
+            </button>
+          </div>
+        </div>
+
+        <div id="sidebar-search-empty" class="hidden px-3 py-6 text-center text-xs text-slate-400">
+          ไม่พบเมนูที่ค้นหา
+        </div>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="p-2.5 border-t border-slate-200 bg-slate-50/70 space-y-2 shrink-0">
+        <div class="side-hide-collapsed flex items-center justify-between px-2 text-xs text-slate-500">
+          <span class="flex items-center gap-1.5 min-w-0">
+            <span id="global-sync-dot" class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+            <span id="global-sync-text" class="truncate">ซิงค์ข้ามเครื่องพร้อมใช้</span>
+          </span>
+        </div>
+
+        <button onclick="confirmLogout()" data-tooltip="ล็อกหน้าจอ / ออกจากระบบ" class="side-logout-btn w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-sm font-bold text-slate-700 transition flex items-center justify-center gap-2">
+          <span>🔒</span><span class="side-hide-collapsed">ล็อกหน้าจอ / ออกจากระบบ</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Floating Tooltip Element for Collapsed Sidebar -->
+    <div id="sidebar-tooltip" class="no-print"></div>
+
+    <!-- MAIN CONTENT COLUMN -->
+    <div id="main-content-col" class="flex-1 min-w-0 flex flex-col min-h-screen">
+      <!-- Top Context Bar -->
+      <header class="sticky top-0 z-30 h-16 bg-white/95 backdrop-blur border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <!-- Mobile Sidebar Open -->
+          <button onclick="toggleMobileSidebar(true)" class="lg:hidden w-9 h-9 rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-[#cb1415] text-slate-700 flex items-center justify-center shrink-0 transition" title="เปิดเมนู">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+            <path d="M3 8.5C3 5.462 5.462 3 8.5 3H9V21H8.5C5.462 21 3 18.538 3 15.5V8.5Z" fill="currentColor" fill-opacity="0.22"/>
+            <rect x="3" y="3" width="18" height="18" rx="5.5" stroke="currentColor" stroke-width="2"/>
+            <line x1="9" y1="3" x2="9" y2="21" stroke="currentColor" stroke-width="2"/>
+            <path d="M14 9.5L16.5 12L14 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          </button>
+          <!-- Desktop Sidebar Toggle -->
+          <button id="btn-topbar-sidebar-toggle" onclick="toggleDesktopSidebar()" class="hidden lg:flex w-9 h-9 rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-[#cb1415] text-slate-700 items-center justify-center shrink-0 transition" title="ยุบ / ขยาย Sidebar">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+              <path d="M3 8.5C3 5.462 5.462 3 8.5 3H9V21H8.5C5.462 21 3 18.538 3 15.5V8.5Z" fill="currentColor" fill-opacity="0.22"/>
+              <rect x="3" y="3" width="18" height="18" rx="5.5" stroke="currentColor" stroke-width="2"/>
+              <line x1="9" y1="3" x2="9" y2="21" stroke="currentColor" stroke-width="2"/>
+              <path id="topbar-toggle-chevron" d="M14 9.5L16.5 12L14 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="min-w-0">
+            <h1 id="topbar-title" class="text-base sm:text-lg font-extrabold text-slate-900 truncate">หน้าหลักรวม (Jaymart Studio)</h1>
+            <p id="topbar-subtitle" class="text-xs text-slate-500 truncate">สาขาโรบินสันสุรินทร์ ชั้น 2 (Sub 1480)</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="btn-pull-cloud-sync" onclick="manualPullActiveModuleSync()" class="hidden px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition items-center gap-1.5" title="ดึงคิวล่าสุดจากเครื่องอื่น">
+            <span>☁️</span><span class="hidden sm:inline">ซิงค์คิวล่าสุด</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- API URL Warning Banner (visible only if GAS_API_URL not yet replaced) -->
+      <div id="api-url-warning" class="hidden mx-4 sm:mx-6 mt-4 p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-center gap-2">
+        <span class="text-base">⚠️</span>
+        <span><strong>ยังไม่ได้ใส่ลิงก์ Web App URL:</strong> กรุณานำลิงก์ <code>/exec</code> ที่ได้จากการ Deploy <code>Code.gs</code> มาใส่ในตัวแปร <code>GAS_API_URL</code> ในไฟล์ <code>index.html</code></span>
+      </div>
+
+      <!-- VIEWS CONTAINER -->
+      <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6">
+
+        <!-- ================= VIEW: HOME ================= -->
+        <section id="view-home" class="py-4 sm:py-8 max-w-5xl mx-auto">
+          <div class="text-center mb-8 sm:mb-10">
+            <div class="inline-flex items-center gap-2 p-1.5 pr-4 rounded-full bg-[#cb1415] text-white shadow-md mb-4">
+              <div class="bg-white px-2.5 py-0.5 rounded-full font-black text-[#cb1415] text-xs tracking-tight">Jaymart</div>
+              <span class="font-extrabold text-[11px] tracking-wider uppercase">MOBILE</span>
+              <span class="text-white/60 text-xs">|</span>
+              <span class="text-xs text-white/95 font-medium">สาขาโรบินสันสุรินทร์ ชั้น 2</span>
+            </div>
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Jaymart Studio Hub</h2>
+            <p class="text-sm sm:text-base font-medium text-slate-500">ศูนย์รวมระบบพิมพ์บาร์โค้ด ส่งกล่อง Lock Phone และใบปะหน้ากล่องโอนสินค้า พร้อมซิงค์คิวข้ามเครื่อง</p>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-5">
+            <!-- Card 1 -->
+            <div onclick="navigate('bc-generator')" class="group bg-white rounded-2xl p-6 border-2 border-slate-200 hover:border-brand-600 shadow-xs hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-brand-50 group-hover:bg-brand-600 text-brand-600 group-hover:text-white flex items-center justify-center text-2xl mb-4 transition-colors">🖨️</div>
+                <h3 class="text-lg font-bold text-slate-900 mb-1 group-hover:text-brand-600">Barcode Studio</h3>
+                <p class="text-xs text-slate-500 leading-relaxed mb-4">สร้างและพิมพ์ป้ายบาร์โค้ด A4 แนวนอน 20 ดวง/แผ่น พร้อมป้ายดำ (AWN)/Upgrade/New/DEMO และจัดการแท็บ Data</p>
+              </div>
+              <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs font-bold text-brand-600">
+                <span>เปิดระบบบาร์โค้ด</span>
+                <span class="group-hover:translate-x-1 transition-transform">➔</span>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div onclick="navigate('lp-form')" class="group bg-white rounded-2xl p-6 border-2 border-slate-200 hover:border-brand-600 shadow-xs hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-brand-50 group-hover:bg-brand-600 text-brand-600 group-hover:text-white flex items-center justify-center text-2xl mb-4 transition-colors">📦</div>
+                <h3 class="text-lg font-bold text-slate-900 mb-1 group-hover:text-brand-600">ส่งกล่อง Lock Phone</h3>
+                <p class="text-xs text-slate-500 leading-relaxed mb-4">สแกนรหัสสินค้า + IMEI ดึงชื่อจาก Data_สินค้า รันเลข Job RKB อัตโนมัติ พร้อมพรีวิวพิมพ์แบบฟอร์ม A4 แนวตั้ง</p>
+              </div>
+              <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs font-bold text-brand-600">
+                <span>เปิดระบบส่งกล่อง RKB</span>
+                <span class="group-hover:translate-x-1 transition-transform">➔</span>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div onclick="navigate('cs-create')" class="group bg-white rounded-2xl p-6 border-2 border-slate-200 hover:border-brand-600 shadow-xs hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-brand-50 group-hover:bg-brand-600 text-brand-600 group-hover:text-white flex items-center justify-center text-2xl mb-4 transition-colors">📄</div>
+                <h3 class="text-lg font-bold text-slate-900 mb-1 group-hover:text-brand-600">ใบปะหน้าระหว่างสาขา</h3>
+                <p class="text-xs text-slate-500 leading-relaxed mb-4">Smart Paste วางเลข Tracking + ใบโอนฯ ดึงที่อยู่สาขาอัตโนมัติ พิมพ์ใบปะหน้า A4 แนวตั้ง 2 ใบ/แผ่น และดูประวัติพิมพ์ซ้ำ</p>
+              </div>
+              <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs font-bold text-brand-600">
+                <span>เปิดระบบใบปะหน้า</span>
+                <span class="group-hover:translate-x-1 transition-transform">➔</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW: BARCODE GENERATOR ================= -->
+        <section id="view-bc-generator" class="hidden space-y-6">
+          <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-100">
+              <div>
+                <h2 class="text-lg font-bold text-slate-900">ระบุรหัสสินค้าที่ต้องการพิมพ์บาร์โค้ด</h2>
+                <p class="text-xs text-slate-500">ดึงข้อมูลสินค้าจากแท็บ Data อัตโนมัติ • ซิงค์คิวข้ามเครื่องอัตโนมัติ</p>
+              </div>
+              <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs">
+                <span class="text-slate-400">🔒 วันที่ทำ (ล็อก):</span>
+                <span id="bc-label-locked-date" class="font-bold text-slate-800 font-mono">--/--/----</span>
+              </div>
+            </div>
+
+            <form onsubmit="event.preventDefault(); bcHandleAddToQueue();" class="space-y-4">
+              <div class="grid sm:grid-cols-12 gap-4">
+                <div class="sm:col-span-7">
+                  <label class="block text-xs font-bold text-slate-700 mb-1.5">Item Code <span class="text-slate-400 font-normal">(ใส่เฉพาะตัวเลข)</span></label>
+                  <div class="relative">
+                    <input
+                      type="text"
+                      id="bc-input-code"
+                      inputmode="numeric"
+                      required
+                      placeholder="เช่น 101001, 102005"
+                      autocomplete="off"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-600 text-base font-mono font-bold text-slate-900"
+                      oninput="this.value = this.value.replace(/[^0-9]/g, ''); bcHandleCodeSearch(this.value);"
+                    />
+                    <div id="bc-search-feedback" class="absolute right-3 top-2.5 text-xs font-semibold"></div>
+                  </div>
+                  <div id="bc-lookup-desc" class="mt-1.5 text-xs text-slate-500 min-h-[18px] flex items-center gap-1.5 flex-wrap"></div>
+                </div>
+
+                <div class="sm:col-span-5">
+                  <label class="block text-xs font-bold text-slate-700 mb-1.5">จำนวนสติกเกอร์ที่ต้องการ</label>
+                  <input
+                    type="number"
+                    id="bc-input-qty"
+                    min="1"
+                    max="500"
+                    value="1"
+                    required
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-600 font-bold text-center text-slate-900"
+                    onchange="bcHandleCustomQtyChange()"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-[11px] font-bold text-slate-500">ปุ่มลัดเลือกจำนวน (1 - 10):</span>
+                  <span class="text-[10px] text-slate-400">กดเลือกได้ทันที</span>
+                </div>
+                <div class="grid grid-cols-5 sm:grid-cols-10 gap-1.5" id="bc-qty-buttons"></div>
+              </div>
+
+              <div class="flex justify-end pt-2">
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-brand-600/20 transition-all flex items-center justify-center gap-2">
+                  <span>➕</span><span>เพิ่มลงรายการพิมพ์</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Action Bar -->
+          <div class="flex flex-wrap justify-between items-center gap-3">
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <span>📋</span> รายการป้ายเตรียมพิมพ์
+            </span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" onclick="bcClearQueue()" class="px-3.5 py-2 text-xs font-bold text-[#cb1415] border border-red-300 bg-white hover:bg-[#cb1415] hover:text-white rounded-xl transition-all">ล้างรายการ</button>
+              <button type="button" onclick="bcOpenPrintPreview()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all">👁️ ดูตัวอย่างพิมพ์</button>
+              <button type="button" onclick="bcExecutePrint()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md transition-all">🖨️ สั่งพิมพ์ A4 แนวนอน</button>
+            </div>
+          </div>
+
+          <!-- Queue Display -->
+          <div id="bc-queue-empty" class="text-center py-12 bg-white rounded-2xl border border-slate-200">
+            <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-xl mb-3">📦</div>
+            <p class="text-sm font-bold text-slate-700 mb-1">ยังไม่มีรายการพิมพ์</p>
+            <p class="text-xs text-slate-400">กรอกรหัสสินค้าและจำนวนด้านบน เพื่อเพิ่มรายการพิมพ์</p>
+          </div>
+
+          <div id="bc-queue-content" class="hidden space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-red-200 rounded-xl">
+              <div class="text-xs text-slate-700">
+                รวมทั้งหมด: <span id="bc-total-stickers" class="font-bold text-base text-[#cb1415]">0</span> ดวง
+                <span class="text-slate-300 mx-1.5">|</span>
+                จัดลงกระดาษ A4 แนวนอน: ประมาณ <span id="bc-total-sheets" class="font-bold text-slate-900">0</span> แผ่น (20 ดวง/แผ่น)
+              </div>
+              <div class="text-[11px] text-[#cb1415] font-semibold bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">
+                ขนาดป้าย: 2.0 x 5.5 ซม. (พร้อมเส้นประนำตัด)
+              </div>
+            </div>
+
+            <div id="bc-queue-table-wrapper" class="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-xs"></div>
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold text-slate-900">ตัวอย่างสติกเกอร์</h3>
+                <span class="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 font-bold text-slate-600">พรีวิวบนหน้าจอ</span>
+              </div>
+              <div id="bc-preview-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW: BARCODE MASTER DATA ================= -->
+        <section id="view-bc-master" class="hidden space-y-6">
+          <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100">
+              <div>
+                <h2 class="text-lg font-bold text-slate-900">ฐานข้อมูลสินค้า (แท็บ Data — Barcode Studio)</h2>
+                <p class="text-xs text-slate-500">เพิ่ม แก้ไข ลบ รายการสินค้าสำหรับพิมพ์บาร์โค้ด</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="bcLoadModule(true)" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5">
+                  <span id="bc-sync-spinner">🔄</span><span>รีเฟรช</span>
+                </button>
+                <button onclick="bcOpenNewItemModal()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md transition">➕ บันทึกไอเทมใหม่</button>
+              </div>
+            </div>
+
+            <div class="space-y-2 mb-4 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-[11px] font-bold text-slate-600">⚡ กรองด่วนตามประเภท (TYPE):</span>
+                <button type="button" onclick="bcToggleSort()" class="text-xs font-bold px-3 py-1 rounded-lg bg-white text-[#cb1415] border border-red-200 hover:bg-[#cb1415] hover:text-white transition flex items-center gap-1">
+                  <span id="bc-sort-icon">⬇️</span><span id="bc-sort-label">เรียง: ใหม่สุด ➔ เก่าสุด</span>
+                </button>
+              </div>
+              <div id="bc-type-filters" class="grid grid-cols-4 sm:grid-cols-7 gap-1.5"></div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div class="relative w-full sm:w-72">
+                <input type="text" id="bc-search-master" placeholder="ค้นหารหัส, ชื่อสินค้า หรือประเภท..." oninput="bcRenderMasterTable()" class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-600" />
+                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+              <span id="bc-master-count" class="text-xs text-slate-500 font-semibold">0 รายการ</span>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200 max-h-[62vh]">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 sticky top-0">
+                  <tr>
+                    <th class="p-3">Item Code</th>
+                    <th class="p-3">Description</th>
+                    <th class="p-3">TYPE</th>
+                    <th class="p-3 text-right">การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="bc-master-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW: LOCK PHONE FORM ================= -->
+        <section id="view-lp-form" class="hidden space-y-6">
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
+              <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#cb1415]"></span>
+                ข้อมูลสาขาและผู้ส่ง (สินเชื่อ RKB)
+              </h2>
+              <div class="flex items-center gap-2">
+                <button onclick="lpPromptNewBatch()" class="text-xs bg-red-50 text-[#cb1415] hover:bg-red-100 px-3 py-1.5 rounded-lg font-bold transition">➕ เริ่มชุดใหม่</button>
+                <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg font-medium hidden sm:inline">รันนิ่ง 00001 รีเซ็ตใหม่ทุกเดือน</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Sub สาขา (4 หลัก)</label>
+                <input type="text" id="lp-sub" value="1480" oninput="lpOnMetaChange()" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-600 outline-none font-mono font-bold" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อสาขา</label>
+                <input type="text" id="lp-branch" value="โรบินสันสุรินทร์" oninput="lpOnMetaChange()" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-600 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">ผู้ส่งสินค้า (ตัวบรรจง)</label>
+                <input type="text" id="lp-sender" placeholder="ระบุชื่อ-นามสกุล ผู้ส่ง" oninput="lpOnMetaChange()" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-600 outline-none" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Scanner -->
+          <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-md">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="p-1.5 bg-[#cb1415] text-white rounded-lg text-xs font-bold">⚡ สแกนเนอร์</span>
+              <span class="text-sm font-bold">สแกนรหัสสินค้า &amp; IMEI (กด Enter เพื่อยิงต่ออัตโนมัติ)</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 text-slate-800">
+              <div class="md:col-span-3">
+                <label class="block text-xs font-medium text-slate-300 mb-1">1. รหัสสินค้า (Item Code)</label>
+                <input type="text" id="lp-scan-code" placeholder="ยิงหรือพิมพ์รหัสสินค้า" list="lp-products-datalist" class="w-full px-3 py-2.5 rounded-xl bg-white text-sm focus:ring-2 focus:ring-brand-600 outline-none font-mono font-medium" />
+                <datalist id="lp-products-datalist"></datalist>
+              </div>
+              <div class="md:col-span-4">
+                <label class="block text-xs font-medium text-slate-300 mb-1">2. รายละเอียดสินค้า (Auto Match)</label>
+                <input type="text" id="lp-scan-desc" placeholder="ดึงจาก Data_สินค้า อัตโนมัติ" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm focus:ring-2 focus:ring-brand-600 outline-none" />
+              </div>
+              <div class="md:col-span-3">
+                <label class="block text-xs font-medium text-slate-300 mb-1">3. เลขอีมี่ (IMEI)</label>
+                <input type="text" id="lp-scan-imei" placeholder="ยิงหรือพิมพ์ IMEI" class="w-full px-3 py-2.5 rounded-xl bg-white text-sm focus:ring-2 focus:ring-brand-600 outline-none font-mono" />
+              </div>
+              <div class="md:col-span-2 flex items-end">
+                <button onclick="lpHandleAddItem()" class="w-full bg-[#cb1415] hover:bg-brand-700 text-white font-bold py-2.5 px-3 rounded-xl transition shadow-md">+ เพิ่มรายการ</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-800 text-sm">รายการกล่องที่จะส่งในชุดนี้:</span>
+                <span id="lp-count-badge" class="text-xs bg-red-100 text-[#cb1415] font-bold px-2.5 py-0.5 rounded-full">0 รายการ</span>
+              </div>
+              <button onclick="lpConfirmClearList()" class="text-xs text-slate-500 hover:text-red-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-red-200 transition">ล้างรายการ</button>
+            </div>
+
+            <div class="overflow-x-auto max-h-80">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-100 text-slate-600 text-xs uppercase border-b border-slate-200 font-semibold sticky top-0">
+                  <tr>
+                    <th class="py-2.5 px-3 text-center w-14">ลำดับ</th>
+                    <th class="py-2.5 px-4">รายการสินค้า</th>
+                    <th class="py-2.5 px-4 w-56">IMEI (แก้ไขได้)</th>
+                    <th class="py-2.5 px-4 w-52">เลข Job (คำนวณอัตโนมัติ)</th>
+                    <th class="py-2.5 px-3 text-center w-16">ลบ</th>
+                  </tr>
+                </thead>
+                <tbody id="lp-items-tbody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+              </table>
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <div class="text-xs text-slate-500">
+                คำนวณแบ่งหน้า A4: <span id="lp-pages-summary" class="font-bold text-slate-700">1 หน้า (หน้าละ 12 แถวตายตัว)</span>
+              </div>
+              <button id="lp-btn-save-print" onclick="lpHandleSaveAndPrint()" class="px-6 py-2.5 rounded-xl bg-[#cb1415] hover:bg-brand-700 text-white font-bold text-sm shadow-md transition disabled:opacity-60">
+                <span id="lp-btn-save-print-label">🖨️ บันทึกและพิมพ์ทันที (PDF)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Live A4 Preview -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-100">
+              <div>
+                <h2 class="font-bold text-slate-800 text-base">📄 ตัวอย่างเอกสาร A4 แนวตั้ง (อัปเดต Real-time)</h2>
+                <p class="text-xs text-slate-500">จัดหน้าละ 12 รายการ หากเกินจะตัดขึ้นหน้าใหม่อัตโนมัติ</p>
+              </div>
+              <button onclick="lpTriggerPrintOnly()" class="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition">🖨️ สั่งพิมพ์หน้านี้ทันที</button>
+            </div>
+            <div id="lp-preview-a4" class="p-2 sm:p-6 bg-slate-200 rounded-2xl flex flex-col items-center overflow-auto max-h-[85vh]"></div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW: LOCK PHONE MASTER DATA ================= -->
+        <section id="view-lp-master" class="hidden space-y-6">
+          <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100">
+              <div>
+                <h2 class="text-lg font-bold text-slate-900">ฐานข้อมูลสินค้า (Data_สินค้า — Lock Phone)</h2>
+                <p class="text-xs text-slate-500">ดึงชื่อรุ่นอัตโนมัติเมื่อยิงรหัสสินค้าในหน้าส่งกล่อง Lock Phone</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="lpLoadModule(true)" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5">
+                  <span id="lp-sync-spinner">🔄</span><span>รีเฟรชชีต</span>
+                </button>
+                <button onclick="lpOpenNewItemModal()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md transition">➕ เพิ่มสินค้าใหม่</button>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div class="relative w-full sm:w-80">
+                <input type="text" id="lp-search-master" placeholder="ค้นหารหัส หรือ รายละเอียดสินค้า..." oninput="lpRenderMasterTable()" class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-600" />
+                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+              <span id="lp-master-count" class="text-xs text-slate-500 font-semibold">0 รายการ</span>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200 max-h-[62vh]">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 sticky top-0">
+                  <tr>
+                    <th class="p-3 w-40">Item Code</th>
+                    <th class="p-3">Description</th>
+                    <th class="p-3 w-28">TYPE</th>
+                    <th class="p-3 text-right w-24">การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="lp-master-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW: COVER SHEET CREATE ================= -->
+        <section id="view-cs-create" class="hidden space-y-6">
+          <div class="grid xl:grid-cols-12 gap-5 items-start">
+            <!-- Left Input Column -->
+            <div class="xl:col-span-5 space-y-5">
+              <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                  <h3 class="font-bold text-slate-900 text-sm">ค่าเริ่มต้นใบปะหน้า</h3>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-red-50 text-[#cb1415]">A4 แนวตั้ง 2 ใบ/แผ่น</span>
+                    <button onclick="csLoadModule(true)" class="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-slate-700" title="รีเฟรชข้อมูลสาขา">↻ สาขา</button>
+                  </div>
+                </div>
+                <div class="p-4 space-y-3">
+                  <div class="grid grid-cols-3 gap-2.5">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-600 mb-1">คลังต้นทาง</label>
+                      <input id="cs-default-origin" list="cs-branch-datalist" value="1480" oninput="csOnDefaultOriginInput()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold focus:ring-2 focus:ring-brand-600 outline-none" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อผู้ส่ง</label>
+                      <input id="cs-sender" placeholder="เช่น เอกรัตน์" oninput="csOnSenderInput()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-600 outline-none" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-600 mb-1">วันที่ (ค.ศ.)</label>
+                      <input id="cs-date" type="date" onchange="csOnDateChange()" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-600 outline-none" />
+                    </div>
+                  </div>
+                  <div id="cs-origin-preview" class="text-[11px] text-slate-500"></div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-slate-100">
+                  <h3 class="font-bold text-slate-900 text-sm">เพิ่มรายการเข้าคิวพิมพ์</h3>
+                </div>
+                <div class="p-4">
+                  <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl mb-4">
+                    <button id="cs-tab-paste" onclick="csSwitchInputMode('paste')" class="py-2 rounded-lg text-xs font-bold bg-white text-[#cb1415] shadow-xs">⚡ วางด่วน (Smart Paste)</button>
+                    <button id="cs-tab-manual" onclick="csSwitchInputMode('manual')" class="py-2 rounded-lg text-xs font-semibold text-slate-600">✍️ กรอกเอง / สร้างเลข</button>
+                  </div>
+
+                  <!-- Smart Paste Mode -->
+                  <div id="cs-mode-paste" class="space-y-3">
+                    <label class="block text-xs font-semibold text-slate-700">วางเลข Tracking (อยู่บน) และเลขเอกสาร (อยู่ล่าง)</label>
+                    <textarea id="cs-smart-paste" rows="6" placeholder="วางทีละคู่ หรือวางต่อกันหลายคู่ได้เลย เช่น:&#10;STS0126111614803024&#10;161480261100013" class="w-full p-3 rounded-xl border-2 border-dashed border-red-300 bg-amber-50/30 focus:bg-white focus:border-brand-600 focus:border-solid outline-none font-mono text-xs leading-relaxed"></textarea>
+                    <p class="text-[11px] text-slate-500">แกะประเภท + จำนวนกล่อง + ต้นทาง + ปลายทาง อัตโนมัติ และดึงข้อมูลสาขาจากแท็บ <code>ข้อมูล</code></p>
+                    <div class="flex gap-2">
+                      <button onclick="csParseSmartPaste()" class="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md">+ เพิ่มเข้าคิวพิมพ์</button>
+                      <button onclick="document.getElementById('cs-smart-paste').value='';document.getElementById('cs-smart-paste').focus();" class="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-50">ล้างช่อง</button>
+                    </div>
+                  </div>
+
+                  <!-- Manual Mode -->
+                  <div id="cs-mode-manual" class="hidden space-y-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-600 mb-1">ประเภทงาน (ช่วยสร้าง Tracking)</label>
+                      <select id="cs-m-type" onchange="csOnManualTypeChange()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">คลังต้นทาง</label>
+                        <input id="cs-m-origin" list="cs-branch-datalist" value="1480" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono" />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">คลังปลายทาง</label>
+                        <input id="cs-m-dest" list="cs-branch-datalist" oninput="csUpdateManualDestPreview()" placeholder="เช่น 3024 หรือ 0006" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono" />
+                      </div>
+                    </div>
+                    <div id="cs-m-dest-preview" class="text-[11px] text-slate-500"></div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">จำนวนกล่อง</label>
+                        <input id="cs-m-boxes" type="number" min="1" max="99" value="1" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold" />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">เลขที่เอกสาร (ใบโอนฯ)</label>
+                        <input id="cs-m-doc" placeholder="เช่น 161480261100013" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono" />
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex items-center justify-between mb-1">
+                        <label class="text-xs font-semibold text-slate-600">Tracking No. (STS / RTV)</label>
+                        <button type="button" onclick="csGenerateTrackingPreview()" class="text-[11px] px-2.5 py-0.5 rounded-lg border border-slate-300 hover:bg-slate-50 font-bold text-slate-700">สร้างเลขอัตโนมัติ</button>
+                      </div>
+                      <input id="cs-m-track" placeholder="เช่น STS0126112414803024" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono" />
+                    </div>
+                    <button onclick="csAddManualItem()" class="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md">+ เพิ่มรายการนี้เข้าคิว</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Queue & Preview Column -->
+            <div class="xl:col-span-7 space-y-5 min-w-0">
+              <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                  <h3 class="font-bold text-slate-900 text-sm">คิวรอพิมพ์ใบปะหน้า</h3>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <button id="cs-btn-save-print" onclick="csSaveAndPrintQueue()" disabled class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-bold shadow-md">💾 บันทึก &amp; พิมพ์ A4</button>
+                    <button id="cs-btn-print-only" onclick="csPrintOnly()" disabled class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black disabled:opacity-50 text-white text-xs font-bold">🖨️ พิมพ์อย่างเดียว</button>
+                    <button id="cs-btn-clear" onclick="csConfirmClearQueue()" disabled class="px-3 py-2 rounded-xl bg-red-50 text-[#cb1415] border border-red-200 disabled:opacity-50 text-xs font-bold">ล้างคิว</button>
+                  </div>
+                </div>
+
+                <div class="p-4 space-y-4">
+                  <div class="flex flex-wrap items-center justify-between gap-2 bg-red-50/70 border border-red-200 rounded-xl px-3.5 py-2.5 text-xs">
+                    <label class="flex items-center gap-2 font-bold text-red-900 cursor-pointer">
+                      <input type="checkbox" id="cs-dup-toggle" checked onchange="csOnDupToggle()" class="w-4 h-4 accent-[#cb1415]" />
+                      <span>พิมพ์บน-ล่างซ้ำกัน 2 ใบต่อ 1 กล่อง (เต็มแผ่น A4)</span>
+                    </label>
+                    <span class="text-[11px] text-slate-500">เอาติ๊กออกเพื่อจับคู่ 2 ปลายทางใน 1 แผ่น</span>
+                  </div>
+
+                  <div class="grid grid-cols-3 gap-2.5">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center">
+                      <div id="cs-stat-items" class="text-xl font-extrabold text-slate-900">0</div>
+                      <div class="text-[11px] text-slate-500">รายการในคิว</div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center">
+                      <div id="cs-stat-slips" class="text-xl font-extrabold text-slate-900">0</div>
+                      <div class="text-[11px] text-slate-500">ใบปะหน้าทั้งหมด</div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center">
+                      <div id="cs-stat-pages" class="text-xl font-extrabold text-[#cb1415]">0</div>
+                      <div class="text-[11px] text-slate-500">กระดาษ A4</div>
+                    </div>
+                  </div>
+
+                  <div id="cs-saved-banner" class="hidden p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
+                    ✓ บันทึกคิวนี้ลงชีต Log_ใบปะหน้า เรียบร้อยแล้ว (กด "พิมพ์อย่างเดียว" ซ้ำได้โดยไม่บันทึกเบิ้ล)
+                  </div>
+
+                  <div id="cs-queue-list" class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1"></div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                  <h3 class="font-bold text-slate-900 text-sm">ตัวอย่างก่อนพิมพ์ (A4 แนวตั้ง 2 ใบ/แผ่น)</h3>
+                  <button onclick="csTogglePreview()" class="px-3 py-1 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50">ซ่อน/แสดง</button>
+                </div>
+                <div id="cs-preview-wrap" class="p-3 bg-slate-200 overflow-x-auto flex flex-col items-center gap-5"></div>
+              </div>
+            </div>
+          </div>
+          <datalist id="cs-branch-datalist"></datalist>
+        </section>
+
+        <!-- ================= VIEW: COVER SHEET HISTORY ================= -->
+        <section id="view-cs-history" class="hidden space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 class="text-base font-bold text-slate-900">ประวัติการออกใบปะหน้า (Log_ใบปะหน้า)</h2>
+                <p id="cs-history-status" class="text-xs text-slate-500">ค้นหาย้อนหลังและติ๊กเลือกเพื่อพิมพ์ซ้ำได้ทันที</p>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <input id="cs-history-search" placeholder="ค้นหา Tracking, ใบโอนฯ, สาขา..." onkeydown="if(event.key==='Enter') csLoadHistory();" class="w-56 sm:w-64 px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-600 outline-none" />
+                <button onclick="csLoadHistory()" class="px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700">ค้นหา</button>
+                <button id="cs-btn-reprint-selected" onclick="csReprintSelected()" disabled class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-bold">🖨️ พิมพ์ซ้ำที่เลือก (0)</button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="p-3 w-10"><input type="checkbox" id="cs-select-all-logs" onchange="csToggleSelectAllLogs(this.checked)" /></th>
+                    <th class="p-3">วันเวลาบันทึก</th>
+                    <th class="p-3">วันที่ใบปะหน้า</th>
+                    <th class="p-3">ต้นทาง → ปลายทาง</th>
+                    <th class="p-3">เลขที่เอกสาร</th>
+                    <th class="p-3">Tracking No.</th>
+                    <th class="p-3">กล่อง</th>
+                    <th class="p-3">ผู้ส่ง</th>
+                    <th class="p-3 text-right">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="cs-history-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Barcode Add/Edit Item Modal -->
+  <div id="bc-modal-item" class="no-print fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+        <div>
+          <h3 id="bc-modal-title" class="text-base font-bold text-slate-900">บันทึก Item สินค้าใหม่</h3>
+          <p class="text-[11px] text-slate-500">บันทึกลงแท็บ Data (Barcode Studio)</p>
+        </div>
+        <button onclick="bcCloseItemModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); bcHandleSaveItemModal();" class="space-y-4">
+        <input type="hidden" id="bc-modal-mode" value="create" />
+        <input type="hidden" id="bc-modal-orig-code" value="" />
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Item Code (เฉพาะตัวเลข)</label>
+          <input type="text" id="bc-modal-code" inputmode="numeric" required oninput="this.value=this.value.replace(/[^0-9]/g,''); bcApplySmartType();" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 font-mono font-bold text-sm focus:ring-2 focus:ring-brand-600 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Description</label>
+          <textarea id="bc-modal-desc" rows="2" required oninput="bcApplySmartType()" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-brand-600 outline-none"></textarea>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-bold text-slate-700">TYPE</label>
+            <span id="bc-modal-type-hint" class="text-[10px] font-bold text-brand-600"></span>
+          </div>
+          <select id="bc-modal-type" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white font-medium">
+            <option value="">-- เลือกประเภทสินค้า --</option>
+            <option value="DEMO">DEMO</option>
+            <option value="MB">MB</option>
+            <option value="Gadget">Gadget</option>
+            <option value="ACC">ACC</option>
+            <option value="PM">PM</option>
+            <option value="AIS">AIS</option>
+          </select>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="bcCloseItemModal()" class="w-1/2 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs">ยกเลิก</button>
+          <button type="submit" id="bc-btn-save-item" class="w-1/2 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md disabled:opacity-60">บันทึกลงชีต Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Barcode Edit Qty Modal -->
+  <div id="bc-modal-qty" class="no-print fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-slate-900">แก้ไขจำนวนป้ายพิมพ์</h3>
+        <button onclick="bcCloseQtyModal()" class="w-7 h-7 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); bcSaveQtyModal();" class="space-y-4">
+        <input type="hidden" id="bc-edit-qty-idx" value="-1" />
+        <div>
+          <p id="bc-edit-qty-info" class="text-xs font-mono font-bold text-slate-700 mb-2 truncate"></p>
+          <input type="number" id="bc-edit-qty-input" min="1" max="500" required class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold text-center text-base focus:ring-2 focus:ring-brand-600 outline-none" />
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="bcCloseQtyModal()" class="w-1/2 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs">ยกเลิก</button>
+          <button type="submit" class="w-1/2 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Barcode A4 Landscape Preview Modal -->
+  <div id="bc-modal-preview" class="no-print fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-6xl w-full h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900">👁️ ตัวอย่างหน้าพิมพ์ A4 แนวนอน (20 ป้าย/แผ่น)</h3>
+          <p class="text-xs text-slate-500">ป้ายขนาด 5.5 x 2.0 ซม. พร้อมเส้นประนำตัด</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="bcExecutePrint()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold">🖨️ พิมพ์หน้านี้</button>
+          <button onclick="bcClosePrintPreview()" class="w-8 h-8 rounded-lg text-slate-500 hover:bg-slate-200 font-bold">✕</button>
+        </div>
+      </div>
+      <div class="flex-1 overflow-auto p-4 bg-slate-200 flex justify-center items-start">
+        <div id="bc-modal-preview-sheet" class="bg-white shadow-2xl rounded relative" style="width:297mm;min-width:297mm;height:206mm;min-height:206mm;margin:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lock Phone Add/Edit Item Modal -->
+  <div id="lp-modal-item" class="no-print fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+        <div>
+          <h3 id="lp-modal-title" class="text-base font-bold text-slate-900">บันทึก Item สินค้าใหม่</h3>
+          <p class="text-[11px] text-slate-500">บันทึกลงแท็บ Data_สินค้า (Lock Phone)</p>
+        </div>
+        <button onclick="lpCloseItemModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); lpHandleSaveItemModal();" class="space-y-4">
+        <input type="hidden" id="lp-modal-mode" value="create" />
+        <input type="hidden" id="lp-modal-orig-code" value="" />
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Item Code</label>
+          <input type="text" id="lp-modal-code" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 font-mono font-bold text-sm focus:ring-2 focus:ring-brand-600 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Description</label>
+          <textarea id="lp-modal-desc" rows="2" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-brand-600 outline-none"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Type</label>
+          <input type="text" id="lp-modal-type" value="Lock Phone" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-brand-600 outline-none" />
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="lpCloseItemModal()" class="w-1/2 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs">ยกเลิก</button>
+          <button type="submit" id="lp-btn-save-item" class="w-1/2 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md disabled:opacity-60">บันทึกลงชีต</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cover Sheet Edit Modal -->
+  <div id="cs-modal-edit" class="no-print fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-xl w-full max-h-[90dvh] overflow-y-auto shadow-2xl border border-slate-200">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white">
+        <h3 class="text-base font-bold text-slate-900">แก้ไขรายละเอียดใบปะหน้า</h3>
+        <button onclick="csCloseEditModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100">✕</button>
+      </div>
+      <div class="p-5 space-y-3 text-xs">
+        <input type="hidden" id="cs-e-id" />
+        <div class="grid grid-cols-3 gap-2.5">
+          <div><label class="block font-semibold text-slate-600 mb-1">คลังต้นทาง</label><input id="cs-e-origin" list="cs-branch-datalist" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" /></div>
+          <div><label class="block font-semibold text-slate-600 mb-1">คลังปลายทาง</label><input id="cs-e-dest" list="cs-branch-datalist" onchange="csFillDestInModal()" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" /></div>
+          <div><label class="block font-semibold text-slate-600 mb-1">จำนวนกล่อง</label><input id="cs-e-boxes" type="number" min="1" max="99" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold" /></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div><label class="block font-semibold text-slate-600 mb-1">เลขที่เอกสาร (ใบโอนฯ)</label><input id="cs-e-doc" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" /></div>
+          <div><label class="block font-semibold text-slate-600 mb-1">Tracking No.</label><input id="cs-e-track" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" /></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div><label class="block font-semibold text-slate-600 mb-1">ผู้ส่ง</label><input id="cs-e-sender" class="w-full px-3 py-2 rounded-xl border border-slate-300" /></div>
+          <div><label class="block font-semibold text-slate-600 mb-1">วันที่ (dd/MM/yyyy)</label><input id="cs-e-date" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" /></div>
+        </div>
+        <div class="pt-2 border-t border-slate-100 font-bold text-slate-800">ข้อมูลปลายทาง</div>
+        <div><label class="block font-semibold text-slate-600 mb-1">ชื่อสาขาปลายทาง</label><input id="cs-e-dest-name" class="w-full px-3 py-2 rounded-xl border border-slate-300" /></div>
+        <div><label class="block font-semibold text-slate-600 mb-1">ที่ตั้งปลายทาง</label><input id="cs-e-dest-addr" class="w-full px-3 py-2 rounded-xl border border-slate-300" /></div>
+        <div class="grid grid-cols-3 gap-2.5">
+          <div><label class="block font-semibold text-slate-600 mb-1">อำเภอ</label><input id="cs-e-dest-dist" class="w-full px-3 py-2 rounded-xl border border-slate-300" /></div>
+          <div><label class="block font-semibold text-slate-600 mb-1">จังหวัด</label><input id="cs-e-dest-prov" class="w-full px-3 py-2 rounded-xl border border-slate-300" /></div>
+          <div><label class="block font-semibold text-slate-600 mb-1">รหัสไปรษณีย์</label><input id="cs-e-dest-zip" class="w-full px-3 py-2 rounded-xl border border-slate-300" /></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div><label class="block font-semibold text-slate-600 mb-1">เบอร์โทร</label><input id="cs-e-dest-tel" class="w-full px-3 py-2 rounded-xl border border-slate-300" /></div>
+          <div><label class="block font-semibold text-slate-600 mb-1">มือถือ</label><input id="cs-e-dest-mob" class="w-full px-3 py-2 rounded-xl border border-slate-300" /></div>
+        </div>
+      </div>
+      <div class="px-5 py-3.5 border-t border-slate-100 flex justify-end gap-2 bg-slate-50">
+        <button onclick="csCloseEditModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600">ยกเลิก</button>
+        <button onclick="csSaveEditModal()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold">บันทึกการแก้ไข</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Confirm Modal -->
+  <div id="modal-confirm" class="no-print fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center">
+      <div class="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto text-xl mb-3">⚠️</div>
+      <h3 id="confirm-title" class="text-base font-bold text-slate-900 mb-1">ยืนยันการทำรายการ</h3>
+      <p id="confirm-desc" class="text-xs text-slate-500 mb-5">คุณต้องการดำเนินการต่อหรือไม่?</p>
+      <div class="flex gap-2">
+        <button onclick="closeConfirmModal(false)" class="w-1/2 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50">ยกเลิก</button>
+        <button onclick="closeConfirmModal(true)" class="w-1/2 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md">ตกลง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== UNIFIED BOTTOM-RIGHT TOAST CONTAINER ==================== -->
+  <div id="toast-container" class="no-print fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm w-[calc(100vw-2rem)] sm:w-auto pointer-events-none"></div>
+
+  <!-- ==================== DEDICATED PRINT MOUNTS ==================== -->
+  <div id="print-area-barcode"></div>
+  <div id="print-area-lockphone"></div>
+  <div id="print-area-coversheet"></div>
+
+  <script>
+    /* ==========================================================================
+       0. CONFIGURATION & GLOBAL APP STATE
+       ========================================================================== */
+    // นำ Web App URL (.../exec) จากการ Deploy Code.gs มาวางแทนที่ด้านล่างนี้
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxtutc8ZXG0ov-9y5UACEN6G_BJstJcE2suxQPuOgTyv-nQC2sTB7LXel99aZ7-2CkvPg/exec';
+
+    const LP_LOGO_FALLBACK_1 = 'https://lh3.googleusercontent.com/d/1m0CDxRaHk-m_XsKnaxp4qmQRTrZJByOC';
+    const LP_LOGO_FALLBACK_2 = 'https://drive.google.com/uc?export=view&id=1m0CDxRaHk-m_XsKnaxp4qmQRTrZJByOC';
+
+    const STORAGE = {
+      SESSION: 'jm_studio_session_v1',
+      BC_CACHE: 'jm_studio_bc_items_v1',
+      BC_QUEUE: 'jm_studio_bc_queue_v1',
+      LP_CACHE: 'jm_studio_lp_cache_v1',
+      LP_QUEUE: 'jm_studio_lp_queue_v1',
+      CS_CACHE: 'jm_studio_cs_cache_v1',
+      CS_QUEUE: 'jm_studio_cs_queue_v1',
+      CS_PREFS: 'jm_studio_cs_prefs_v1'
+    };
+
+    const CS_DEFAULT_RULES = [
+      { prefix: 'STS', label: 'STS - โอนระหว่างสาขา (Shop to Shop)', defaultDest: '' },
+      { prefix: 'RTJ', label: 'RTJ - คืนคลัง 0001 / อุปกรณ์ IT / Asset / เอกสาร', defaultDest: '0001' },
+      { prefix: 'RTY', label: 'RTY - คืนคลัง YAS 0050 / กล่องเปล่า (Reuse)', defaultDest: '0050' },
+      { prefix: 'RTS', label: 'RTS - ซ่อม/เคลม MB (0005), ACC (0006), DEMO (0009)', defaultDest: '0006' },
+      { prefix: 'RTA', label: 'RTA - คืนทรัพย์สิน (Asset)', defaultDest: '0001' },
+      { prefix: 'RTV', label: 'RTV - คืน Sup. โดยตรง (0003)', defaultDest: '0003' }
+    ];
+
+    const nowDate = new Date();
+    const lockedDateDisplay = `${String(nowDate.getDate()).padStart(2, '0')}/${String(nowDate.getMonth() + 1).padStart(2, '0')}/${nowDate.getFullYear()}`;
+    const defaultYYMM = String(nowDate.getFullYear()).slice(-2) + String(nowDate.getMonth() + 1).padStart(2, '0');
+
+    const app = {
+      token: '',
+      expiresAt: 0,
+      currentView: 'home',
+      confirmCallback: null,
+      syncTimers: {},
+
+      bc: {
+        loaded: false,
+        loading: false,
+        lockedDate: lockedDateDisplay,
+        selectedType: 'ALL',
+        sortOrder: 'newest',
+        masterItems: [],
+        queue: [],
+        queueUpdatedAt: 0,
+        pendingQueueItem: null
+      },
+
+      lp: {
+        loaded: false,
+        loading: false,
+        sub: '1480',
+        branch: 'โรบินสันสุรินทร์',
+        senderName: '',
+        currentSeq: 1,
+        currentYYMM: defaultYYMM,
+        logoDataUrl: '',
+        masterItems: [],
+        items: [],
+        queueUpdatedAt: 0,
+        isSaving: false
+      },
+
+      cs: {
+        loaded: false,
+        loading: false,
+        branches: [],
+        branchMap: {},
+        rules: CS_DEFAULT_RULES,
+        queue: [],
+        queueUpdatedAt: 0,
+        lastSavedSignature: '',
+        logs: [],
+        selectedLogKeys: new Set(),
+        previewVisible: true,
+        duplicatePerSheet: true
+      }
+    };
+
+    /* ==========================================================================
+       1. INITIALIZATION
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!GAS_API_URL || GAS_API_URL.includes('PUT_YOUR_UNIFIED_GAS_EXEC_URL_HERE')) {
+        document.getElementById('api-url-warning').classList.remove('hidden');
+      }
+
+      // Init Barcode UI static widgets
+      document.getElementById('bc-label-locked-date').textContent = app.bc.lockedDate;
+      bcBuildQtyButtons();
+      bcBuildTypeFilterButtons();
+
+      // Init Lock Phone scanner enter listeners
+      const lpCode = document.getElementById('lp-scan-code');
+      const lpDesc = document.getElementById('lp-scan-desc');
+      const lpImei = document.getElementById('lp-scan-imei');
+      lpCode.addEventListener('input', () => {
+        const v = lpCode.value.trim().toLowerCase();
+        const f = app.lp.masterItems.find(p => String(p.itemCode).toLowerCase() === v);
+        if (f) lpDesc.value = f.description;
+      });
+      lpCode.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const v = lpCode.value.trim().toLowerCase();
+          const f = app.lp.masterItems.find(p => String(p.itemCode).toLowerCase() === v);
+          if (f) lpDesc.value = f.description;
+          lpImei.focus();
         }
-    </script>
+      });
+      lpImei.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          lpHandleAddItem();
+        }
+      });
 
+      // Init Cover Sheet defaults
+      document.getElementById('cs-date').value = csTodayIso();
+      csSetRules(CS_DEFAULT_RULES);
+      csLoadLocalPrefs();
+
+      initSidebarEnhance();
+      initModalShakeAndScrollLock();
+      initSessionOnLoad();
+    });
+
+    /* ==========================================================================
+       2. API CLIENT & SINGLE PIN AUTH (6-HOUR SESSION)
+       ========================================================================== */
+    async function callApi(action, payload = {}, skipAuthRedirect = false) {
+      if (!GAS_API_URL || GAS_API_URL.includes('PUT_YOUR_UNIFIED_GAS_EXEC_URL_HERE')) {
+        throw new Error('กรุณาใส่ลิงก์ GAS_API_URL ในไฟล์ index.html ก่อนใช้งาน');
+      }
+      const body = Object.assign({ action: action }, payload);
+      if (app.token && !body.token) body.token = app.token;
+
+      const res = await fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      if (data && data.code === 'UNAUTHORIZED' && !skipAuthRedirect) {
+        clearStoredSession();
+        showPinLockScreen('เซสชันหมดอายุ (ครบ 6 ชม.) กรุณากรอกรหัส PIN ใหม่');
+        throw new Error('UNAUTHORIZED');
+      }
+      return data;
+    }
+
+    function getStoredSession() {
+      try {
+        const raw = localStorage.getItem(STORAGE.SESSION);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.token || !parsed.expiresAt) return null;
+        if (Date.now() >= Number(parsed.expiresAt)) {
+          localStorage.removeItem(STORAGE.SESSION);
+          return null;
+        }
+        return parsed;
+      } catch (e) { return null; }
+    }
+
+    function saveStoredSession(token, expiresAt) {
+      app.token = token;
+      app.expiresAt = expiresAt;
+      try {
+        localStorage.setItem(STORAGE.SESSION, JSON.stringify({ token, expiresAt }));
+      } catch (e) {}
+    }
+
+    function clearStoredSession() {
+      app.token = '';
+      app.expiresAt = 0;
+      try { localStorage.removeItem(STORAGE.SESSION); } catch (e) {}
+    }
+
+    function setPinLoading(loading, text = 'กำลังตรวจสอบรหัส PIN...') {
+      document.getElementById('pin-loading-text').textContent = text;
+      document.getElementById('pin-login-form').classList.toggle('hidden', loading);
+      document.getElementById('pin-loading-state').classList.toggle('hidden', !loading);
+    }
+
+    function showPinLockScreen(errMsg = '') {
+      document.getElementById('app-shell').classList.add('hidden');
+      document.getElementById('pin-lock-screen').classList.remove('hidden');
+      setPinLoading(false);
+      const errEl = document.getElementById('pin-error-msg');
+      if (errMsg) {
+        errEl.textContent = errMsg;
+        errEl.classList.remove('hidden');
+      } else {
+        errEl.classList.add('hidden');
+      }
+      const inp = document.getElementById('pin-input');
+      inp.value = '';
+      setTimeout(() => inp.focus(), 80);
+    }
+
+    function enterAppShell() {
+      document.getElementById('pin-lock-screen').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('hidden');
+      hydrateLocalQueues();
+      updateSidebarBadges();
+      navigate('home');
+    }
+
+    async function initSessionOnLoad() {
+      const saved = getStoredSession();
+      if (!saved) {
+        showPinLockScreen();
+        return;
+      }
+      app.token = saved.token;
+      app.expiresAt = saved.expiresAt;
+      // เข้าใช้งานได้ทันที แล้วเช็คสิทธิ์เงียบๆ เบื้องหลัง
+      enterAppShell();
+      try {
+        await callApi('ping', {}, false);
+      } catch (e) {}
+    }
+
+    async function handlePinLogin() {
+      const inp = document.getElementById('pin-input');
+      const errEl = document.getElementById('pin-error-msg');
+      const card = document.getElementById('pin-lock-card');
+      const pin = inp.value.trim();
+      if (!pin) return;
+
+      errEl.classList.add('hidden');
+      setPinLoading(true);
+      try {
+        const res = await callApi('login', { pin }, true);
+        if (res && res.success && res.token) {
+          saveStoredSession(res.token, res.expiresAt);
+          enterAppShell();
+          showToast('เข้าสู่ระบบเรียบร้อย (จำสถานะ 6 ชม.)', 'success');
+        } else {
+          setPinLoading(false);
+          errEl.textContent = (res && res.message) ? res.message : 'รหัส PIN ไม่ถูกต้อง';
+          errEl.classList.remove('hidden');
+          card.classList.remove('animate-shake');
+          void card.offsetWidth;
+          card.classList.add('animate-shake');
+          inp.value = '';
+          inp.focus();
+        }
+      } catch (err) {
+        setPinLoading(false);
+        errEl.textContent = err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function confirmLogout() {
+      showConfirmModal('ล็อกหน้าจอ', 'ต้องการออกจากระบบและล็อกหน้าจอนี้ใช่หรือไม่?', async (ok) => {
+        if (!ok) return;
+        const oldToken = app.token;
+        clearStoredSession();
+        showPinLockScreen();
+        if (oldToken) {
+          try { await callApi('logout', { token: oldToken }, true); } catch (e) {}
+        }
+      });
+    }
+
+    /* ==========================================================================
+       3. NAVIGATION, SIDEBAR & CROSS-DEVICE SYNC ENGINE
+       ========================================================================== */
+    const VIEW_META = {
+      'home':         { title: 'หน้าหลักรวม (Jaymart Studio)', sub: 'สาขาโรบินสันสุรินทร์ ชั้น 2 (Sub 1480)', mod: '' },
+      'bc-generator': { title: 'Barcode Studio — พิมพ์บาร์โค้ด A4', sub: 'พิมพ์ป้ายสติกเกอร์ A4 แนวนอน 20 ดวง/แผ่น', mod: 'barcode' },
+      'bc-master':    { title: 'Barcode Studio — ฐานข้อมูลสินค้า (Data)', sub: 'เพิ่ม แก้ไข ลบ รายการสินค้าในแท็บ Data', mod: 'barcode' },
+      'lp-form':      { title: 'ระบบส่งกล่อง Lock Phone (สินเชื่อ RKB)', sub: 'สแกนรหัส + IMEI รันเลข Job และพิมพ์ A4 แนวตั้ง', mod: 'lockphone' },
+      'lp-master':    { title: 'Lock Phone — ฐานข้อมูลสินค้า (Data_สินค้า)', sub: 'จัดการฐานข้อมูลสินค้าสำหรับส่งกล่อง Lock Phone', mod: 'lockphone' },
+      'cs-create':    { title: 'ใบปะหน้าระหว่างสาขา — พิมพ์ใบปะหน้ากล่อง', sub: 'Smart Paste วาง Tracking + ใบโอนฯ พิมพ์ A4 แนวตั้ง 2 ใบ/แผ่น', mod: 'coversheet' },
+      'cs-history':   { title: 'ใบปะหน้าระหว่างสาขา — ประวัติ & พิมพ์ซ้ำ', sub: 'ค้นหาและพิมพ์ซ้ำจากชีต Log_ใบปะหน้า', mod: 'coversheet' }
+    };
+
+    function toggleMobileSidebar(open) {
+      const sb = document.getElementById('app-sidebar');
+      const bd = document.getElementById('sidebar-backdrop');
+      if (open) {
+        sb.classList.remove('-translate-x-full');
+        bd.classList.remove('hidden');
+      } else {
+        sb.classList.add('-translate-x-full');
+        bd.classList.add('hidden');
+      }
+    }
+
+    function navigate(viewId) {
+      app.currentView = viewId;
+      toggleMobileSidebar(false);
+      document.getElementById('app-sidebar')?.classList.remove('sidebar-hover-open');
+
+      Object.keys(VIEW_META).forEach(k => {
+        const sec = document.getElementById('view-' + k);
+        const btn = document.getElementById('side-' + k);
+        if (sec) sec.classList.toggle('hidden', k !== viewId);
+        if (btn) btn.classList.toggle('active', k === viewId);
+      });
+
+      const meta = VIEW_META[viewId] || VIEW_META.home;
+      document.getElementById('topbar-title').textContent = meta.title;
+      document.getElementById('topbar-subtitle').textContent = meta.sub;
+
+      const syncBtn = document.getElementById('btn-pull-cloud-sync');
+      if (meta.mod) {
+        syncBtn.classList.remove('hidden');
+        syncBtn.classList.add('flex');
+      } else {
+        syncBtn.classList.add('hidden');
+        syncBtn.classList.remove('flex');
+      }
+
+      // Lazy load module on first visit
+      if (meta.mod === 'barcode' && !app.bc.loaded) bcLoadModule(false);
+      if (meta.mod === 'lockphone' && !app.lp.loaded) lpLoadModule(false);
+      if (meta.mod === 'coversheet' && !app.cs.loaded) csLoadModule(false);
+
+      if (viewId === 'bc-generator') setTimeout(() => document.getElementById('bc-input-code')?.focus(), 80);
+      if (viewId === 'lp-form') lpRenderPreview();
+      if (viewId === 'cs-create') setTimeout(() => document.getElementById('cs-smart-paste')?.focus(), 80);
+      if (viewId === 'cs-history') csLoadHistory();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setGlobalSyncStatus(status, text) {
+      const dot = document.getElementById('global-sync-dot');
+      const lbl = document.getElementById('global-sync-text');
+      if (!dot || !lbl) return;
+      lbl.textContent = text;
+      dot.className = 'w-2 h-2 rounded-full ' + (
+        status === 'syncing' ? 'bg-amber-500 animate-pulse' :
+        status === 'error' ? 'bg-rose-500' : 'bg-emerald-500'
+      );
+    }
+
+    let sidebarHoverTimer = null;
+
+    function initSidebarEnhance() {
+      const sb = document.getElementById('app-sidebar');
+      const shell = document.getElementById('app-shell');
+      const searchInp = document.getElementById('sidebar-search-input');
+      const tip = document.getElementById('sidebar-tooltip');
+      if (!sb || !shell) return;
+
+      // เริ่มต้นยุบไว้เสมอเมื่อเข้าเว็บ (ไม่กางออกเอง)
+      sb.classList.add('sidebar-collapsed');
+      sb.classList.remove('sidebar-hover-open');
+      shell.classList.add('is-sidebar-collapsed');
+
+      // เอาเมาส์ชี้ใกล้/เข้า Sidebar -> กางออกอัตโนมัติ, เอาเมาส์ออก -> ยุบกลับอัตโนมัติ
+      sb.addEventListener('mouseenter', () => {
+        if (window.innerWidth < 1024) return;
+        clearTimeout(sidebarHoverTimer);
+        if (sb.classList.contains('sidebar-collapsed')) {
+          sb.classList.add('sidebar-hover-open');
+          if (tip) tip.classList.remove('visible');
+        }
+      });
+
+      sb.addEventListener('mouseleave', () => {
+        if (window.innerWidth < 1024) return;
+        clearTimeout(sidebarHoverTimer);
+        if (searchInp && document.activeElement === searchInp) return;
+        sidebarHoverTimer = setTimeout(() => {
+          sb.classList.remove('sidebar-hover-open');
+        }, 140);
+      });
+
+      if (searchInp) {
+        searchInp.addEventListener('blur', () => {
+          if (window.innerWidth < 1024) return;
+          if (sb.classList.contains('sidebar-collapsed') && !sb.matches(':hover')) {
+            sb.classList.remove('sidebar-hover-open');
+          }
+        });
+      }
+
+      // Floating tooltip (เผื่อกรณีที่ยังไม่ได้กางออก)
+      if (tip) {
+        sb.querySelectorAll('[data-tooltip]').forEach(el => {
+          el.addEventListener('mouseenter', () => {
+            if (window.innerWidth < 1024 || !sb.classList.contains('sidebar-collapsed') || sb.classList.contains('sidebar-hover-open')) return;
+            const text = el.getAttribute('data-tooltip');
+            if (!text) return;
+            const rect = el.getBoundingClientRect();
+            tip.textContent = text;
+            tip.style.top = (rect.top + rect.height / 2) + 'px';
+            tip.style.left = (rect.right + 10) + 'px';
+            tip.style.transform = 'translateY(-50%)';
+            tip.classList.add('visible');
+          });
+          el.addEventListener('mouseleave', () => tip.classList.remove('visible'));
+          el.addEventListener('click', () => tip.classList.remove('visible'));
+        });
+      }
+    }
+
+    function toggleDesktopSidebar(forceCollapse) {
+      const sb = document.getElementById('app-sidebar');
+      const shell = document.getElementById('app-shell');
+      if (!sb || !shell) return;
+      const shouldCollapse = typeof forceCollapse === 'boolean'
+        ? forceCollapse
+        : !sb.classList.contains('sidebar-collapsed');
+      sb.classList.toggle('sidebar-collapsed', shouldCollapse);
+      sb.classList.remove('sidebar-hover-open');
+      shell.classList.toggle('is-sidebar-collapsed', shouldCollapse);
+      document.getElementById('sidebar-tooltip')?.classList.remove('visible');
+      const chev = document.getElementById('topbar-toggle-chevron');
+      if (chev) chev.setAttribute('d', shouldCollapse ? 'M14 9.5L16.5 12L14 14.5' : 'M16 9.5L13.5 12L16 14.5');
+    }
+
+    function expandAndFocusSearch() {
+      toggleDesktopSidebar(false);
+      setTimeout(() => document.getElementById('sidebar-search-input')?.focus(), 180);
+    }
+
+    function filterSidebarMenu(query) {
+      const q = String(query || '').trim().toLowerCase();
+      const clearBtn = document.getElementById('sidebar-search-clear');
+      if (clearBtn) {
+        clearBtn.classList.toggle('hidden', !q);
+        clearBtn.classList.toggle('flex', Boolean(q));
+      }
+
+      const nav = document.getElementById('sidebar-nav');
+      if (!nav) return;
+      let totalVisible = 0;
+
+      nav.querySelectorAll('.side-group').forEach(group => {
+        const btns = group.querySelectorAll('.side-btn');
+        let groupVisible = 0;
+        btns.forEach(btn => {
+          const hay = ((btn.textContent || '') + ' ' + (btn.getAttribute('data-search') || '')).toLowerCase();
+          const match = !q || hay.includes(q);
+          btn.classList.toggle('hidden', !match);
+          if (match) groupVisible++;
+        });
+        group.classList.toggle('hidden', groupVisible === 0);
+        totalVisible += groupVisible;
+      });
+
+      const emptyEl = document.getElementById('sidebar-search-empty');
+      if (emptyEl) emptyEl.classList.toggle('hidden', totalVisible > 0);
+    }
+
+    function clearSidebarSearch() {
+      const inp = document.getElementById('sidebar-search-input');
+      if (inp) {
+        inp.value = '';
+        filterSidebarMenu('');
+        inp.focus();
+      }
+    }
+
+    function updateSidebarBadges() {
+      const map = [
+        ['side-badge-bc', 'side-dot-bc', app.bc.queue.length],
+        ['side-badge-lp', 'side-dot-lp', app.lp.items.length],
+        ['side-badge-cs', 'side-dot-cs', app.cs.queue.length]
+      ];
+      map.forEach(([badgeId, dotId, count]) => {
+        const el = document.getElementById(badgeId);
+        if (el) {
+          el.textContent = count;
+          el.classList.toggle('hidden', count === 0);
+        }
+        const dot = document.getElementById(dotId);
+        if (dot) {
+          dot.style.opacity = count > 0 ? '1' : '0';
+        }
+      });
+    }
+
+    function hydrateLocalQueues() {
+      try {
+        const bcQ = JSON.parse(localStorage.getItem(STORAGE.BC_QUEUE) || 'null');
+        if (bcQ && Array.isArray(bcQ.queue)) {
+          app.bc.queue = bcQ.queue;
+          app.bc.queueUpdatedAt = Number(bcQ.updatedAt || 0);
+          bcRenderQueue();
+        }
+      } catch (e) {}
+
+      try {
+        const lpQ = JSON.parse(localStorage.getItem(STORAGE.LP_QUEUE) || 'null');
+        if (lpQ && Array.isArray(lpQ.items)) {
+          app.lp.items = lpQ.items;
+          if (lpQ.sub) { app.lp.sub = lpQ.sub; document.getElementById('lp-sub').value = lpQ.sub; }
+          if (lpQ.branch) { app.lp.branch = lpQ.branch; document.getElementById('lp-branch').value = lpQ.branch; }
+          if (lpQ.senderName) { app.lp.senderName = lpQ.senderName; document.getElementById('lp-sender').value = lpQ.senderName; }
+          app.lp.queueUpdatedAt = Number(lpQ.updatedAt || 0);
+          lpRenderItemsTable();
+        }
+      } catch (e) {}
+
+      try {
+        const csQ = JSON.parse(localStorage.getItem(STORAGE.CS_QUEUE) || 'null');
+        if (csQ && Array.isArray(csQ.queue)) {
+          app.cs.queue = csQ.queue;
+          app.cs.queueUpdatedAt = Number(csQ.updatedAt || 0);
+          csRenderQueue();
+        }
+      } catch (e) {}
+    }
+
+    function scheduleCloudSync(mod, dataObj, force = false) {
+      const ts = Date.now();
+      if (mod === 'barcode') {
+        app.bc.queueUpdatedAt = ts;
+        try { localStorage.setItem(STORAGE.BC_QUEUE, JSON.stringify({ queue: dataObj.queue, updatedAt: ts })); } catch (e) {}
+      } else if (mod === 'lockphone') {
+        app.lp.queueUpdatedAt = ts;
+        try { localStorage.setItem(STORAGE.LP_QUEUE, JSON.stringify(Object.assign({}, dataObj, { updatedAt: ts }))); } catch (e) {}
+      } else if (mod === 'coversheet') {
+        app.cs.queueUpdatedAt = ts;
+        try { localStorage.setItem(STORAGE.CS_QUEUE, JSON.stringify({ queue: dataObj.queue, updatedAt: ts })); } catch (e) {}
+      }
+      updateSidebarBadges();
+
+      clearTimeout(app.syncTimers[mod]);
+      setGlobalSyncStatus('syncing', 'กำลังซิงค์คิวขึ้นระบบ...');
+      app.syncTimers[mod] = setTimeout(async () => {
+        try {
+          const res = await callApi('saveSyncQueue', {
+            module: mod,
+            data: dataObj,
+            updatedAt: ts,
+            force: force
+          });
+          if (res && res.success) {
+            setGlobalSyncStatus('ok', 'ซิงค์ข้ามเครื่องล่าสุดแล้ว');
+          } else {
+            setGlobalSyncStatus('error', 'ซิงค์คิวไม่สำเร็จ');
+          }
+        } catch (err) {
+          if (err.message !== 'UNAUTHORIZED') setGlobalSyncStatus('error', 'ออฟไลน์ (เก็บไว้ในเครื่อง)');
+        }
+      }, force ? 100 : 1200);
+    }
+
+    async function manualPullActiveModuleSync() {
+      const meta = VIEW_META[app.currentView];
+      if (!meta || !meta.mod) return;
+      setGlobalSyncStatus('syncing', 'กำลังดึงคิวล่าสุด...');
+      try {
+        const res = await callApi('getSyncQueue', { module: meta.mod });
+        if (res && res.success) {
+          applyCloudSyncPayload(meta.mod, res, true);
+          setGlobalSyncStatus('ok', 'ซิงค์คิวล่าสุดเรียบร้อย');
+        }
+      } catch (err) {
+        if (err.message !== 'UNAUTHORIZED') {
+          showToast('ดึงคิวล่าสุดไม่สำเร็จ: ' + err.message, 'error');
+          setGlobalSyncStatus('error', 'ซิงค์ไม่สำเร็จ');
+        }
+      }
+    }
+
+    function applyCloudSyncPayload(mod, syncRes, isManual = false) {
+      if (!syncRes || !syncRes.data) {
+        if (isManual) showToast('ไม่มีคิวค้างบนระบบ', 'info');
+        return;
+      }
+      const cloudTs = Number(syncRes.updatedAt || 0);
+
+      if (mod === 'barcode') {
+        const cloudQueue = Array.isArray(syncRes.data.queue) ? syncRes.data.queue : [];
+        if (isManual || cloudTs > app.bc.queueUpdatedAt || (app.bc.queue.length === 0 && cloudQueue.length > 0)) {
+          app.bc.queue = cloudQueue;
+          app.bc.queueUpdatedAt = cloudTs;
+          try { localStorage.setItem(STORAGE.BC_QUEUE, JSON.stringify({ queue: cloudQueue, updatedAt: cloudTs })); } catch (e) {}
+          bcRenderQueue();
+          updateSidebarBadges();
+          if (cloudQueue.length > 0) showToast(`ซิงค์คิว Barcode ล่าสุดแล้ว (${cloudQueue.length} รายการ)`, 'info');
+          else if (isManual) showToast('คิว Barcode ล่าสุดว่างอยู่', 'info');
+        }
+      } else if (mod === 'lockphone') {
+        const cloudItems = Array.isArray(syncRes.data.items) ? syncRes.data.items : [];
+        if (isManual || cloudTs > app.lp.queueUpdatedAt || (app.lp.items.length === 0 && cloudItems.length > 0)) {
+          app.lp.items = cloudItems;
+          if (syncRes.data.sub) { app.lp.sub = syncRes.data.sub; document.getElementById('lp-sub').value = syncRes.data.sub; }
+          if (syncRes.data.branch) { app.lp.branch = syncRes.data.branch; document.getElementById('lp-branch').value = syncRes.data.branch; }
+          if (syncRes.data.senderName !== undefined) { app.lp.senderName = syncRes.data.senderName; document.getElementById('lp-sender').value = syncRes.data.senderName; }
+          app.lp.queueUpdatedAt = cloudTs;
+          try { localStorage.setItem(STORAGE.LP_QUEUE, JSON.stringify(Object.assign({}, syncRes.data, { updatedAt: cloudTs }))); } catch (e) {}
+          lpRenderItemsTable();
+          updateSidebarBadges();
+          if (cloudItems.length > 0) showToast(`ซิงค์คิว Lock Phone ล่าสุดแล้ว (${cloudItems.length} รายการ)`, 'info');
+          else if (isManual) showToast('คิว Lock Phone ล่าสุดว่างอยู่', 'info');
+        }
+      } else if (mod === 'coversheet') {
+        const cloudQueue = Array.isArray(syncRes.data.queue) ? syncRes.data.queue : [];
+        if (isManual || cloudTs > app.cs.queueUpdatedAt || (app.cs.queue.length === 0 && cloudQueue.length > 0)) {
+          app.cs.queue = cloudQueue;
+          app.cs.queueUpdatedAt = cloudTs;
+          try { localStorage.setItem(STORAGE.CS_QUEUE, JSON.stringify({ queue: cloudQueue, updatedAt: cloudTs })); } catch (e) {}
+          csRenderQueue();
+          updateSidebarBadges();
+          if (cloudQueue.length > 0) showToast(`ซิงค์คิวใบปะหน้าล่าสุดแล้ว (${cloudQueue.length} รายการ)`, 'info');
+          else if (isManual) showToast('คิวใบปะหน้าล่าสุดว่างอยู่', 'info');
+        }
+      }
+    }
+
+    /* ==========================================================================
+       4. DYNAMIC PRINT ENGINE (A4 LANDSCAPE vs A4 PORTRAIT — ZERO COLLISION)
+       ========================================================================== */
+    function runScopedPrint(mode) {
+      const styleEl = document.getElementById('dynamic-print-style');
+      if (mode === 'barcode') {
+        styleEl.textContent = `
+          @media print {
+            @page { size: A4 landscape; margin: 0 !important; }
+            html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 297mm !important; height: auto !important; }
+            body > *:not(#print-area-barcode) { display: none !important; }
+            #print-area-barcode { display: block !important; width: 297mm !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+            .page-landscape { width: 297mm !important; height: 206mm !important; position: relative !important; box-sizing: border-box !important; background: #fff !important; overflow: hidden !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+            .page-landscape + .page-landscape { page-break-before: always !important; break-before: page !important; }
+            .cut-lines-svg { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          }
+        `;
+      } else if (mode === 'lockphone') {
+        styleEl.textContent = `
+          @media print {
+            @page { size: A4 portrait; margin: 0 !important; }
+            html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 210mm !important; }
+            body > *:not(#print-area-lockphone) { display: none !important; }
+            #print-area-lockphone { display: block !important; width: 210mm !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+            .page-break-box { page-break-after: always; break-after: page; width: 210mm !important; min-height: 297mm; box-sizing: border-box; padding: 12mm 16mm; display: block; }
+            .page-break-box:last-child { page-break-after: auto; break-after: auto; }
+          }
+        `;
+      } else if (mode === 'coversheet') {
+        styleEl.textContent = `
+          @media print {
+            @page { size: A4 portrait; margin: 0 !important; }
+            html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 210mm !important; }
+            body > *:not(#print-area-coversheet) { display: none !important; }
+            #print-area-coversheet { display: block !important; width: 210mm !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+            .a4-page { box-shadow: none !important; margin: 0 !important; width: 210mm !important; height: 297mm !important; padding: 7mm 8mm !important; }
+          }
+        `;
+      }
+      setTimeout(() => window.print(), 200);
+    }
+
+    /* ==========================================================================
+       5. MODULE 1: BARCODE STUDIO
+       ========================================================================== */
+    function bcBuildQtyButtons() {
+      const wrap = document.getElementById('bc-qty-buttons');
+      let html = '';
+      for (let n = 1; n <= 10; n++) {
+        const active = n === 1
+          ? 'bg-[#cb1415] text-white border-[#cb1415] shadow-xs'
+          : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-red-50 hover:text-[#cb1415]';
+        html += `<button type="button" onclick="bcSetQty(${n})" class="bc-btn-qty px-2 py-1.5 rounded-lg text-xs font-bold border transition-all ${active}">${n}</button>`;
+      }
+      wrap.innerHTML = html;
+    }
+
+    function bcBuildTypeFilterButtons() {
+      const types = ['ALL', 'DEMO', 'MB', 'Gadget', 'ACC', 'PM', 'AIS'];
+      const labels = ['ทั้งหมด', 'DEMO', 'MB', 'Gadget', 'ACC', 'PM', 'AIS'];
+      const wrap = document.getElementById('bc-type-filters');
+      wrap.innerHTML = types.map((t, idx) => {
+        const cls = t === 'ALL'
+          ? 'bg-[#cb1415] text-white border-[#cb1415] shadow-xs'
+          : 'bg-white border-slate-200 text-slate-700 hover:bg-red-50 hover:text-[#cb1415]';
+        return `<button type="button" onclick="bcSetTypeFilter('${t}')" class="bc-btn-filter px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all ${cls}">${labels[idx]}</button>`;
+      }).join('');
+    }
+
+    async function bcLoadModule(forceRefresh = false) {
+      if (app.bc.loading) return;
+      app.bc.loading = true;
+      const spinner = document.getElementById('bc-sync-spinner');
+      if (spinner) spinner.classList.add('animate-spin');
+
+      // แสดงแคชในเครื่องก่อนทันทีถ้ามี
+      if (!forceRefresh && !app.bc.loaded) {
+        try {
+          const cached = JSON.parse(localStorage.getItem(STORAGE.BC_CACHE) || '[]');
+          if (cached.length) {
+            app.bc.masterItems = cached;
+            bcRenderMasterTable();
+          }
+        } catch (e) {}
+      }
+
+      try {
+        const res = await callApi('bc_bootstrap', { forceRefresh });
+        if (res && res.success) {
+          app.bc.loaded = true;
+          app.bc.masterItems = res.items || [];
+          try { localStorage.setItem(STORAGE.BC_CACHE, JSON.stringify(app.bc.masterItems)); } catch (e) {}
+          bcRenderMasterTable();
+          if (res.syncQueue) applyCloudSyncPayload('barcode', res.syncQueue, false);
+          if (forceRefresh) showToast(`ซิงค์ข้อมูล Barcode สำเร็จ (${app.bc.masterItems.length} รายการ)`, 'success');
+        }
+      } catch (err) {
+        if (err.message !== 'UNAUTHORIZED') showToast('โหลดข้อมูล Barcode ไม่สำเร็จ: ' + err.message, 'error');
+      } finally {
+        app.bc.loading = false;
+        if (spinner) spinner.classList.remove('animate-spin');
+      }
+    }
+
+    function bcFormatDescription(text, type = '') {
+      if (!text) return '';
+      const safe = escapeHtml(text);
+      const regex = /(\(AWN\)|\((?:Upgrade|New)(?:[\s-_]+[A-Za-z0-9+]+)?\)|\b(?:Upgrade|New)(?:[\s-_]+[A-Za-z0-9+]+)?\b|(?<![A-Za-z0-9_-])\(?(?:DEMO|Demo|demo)\)?(?![A-Za-z0-9_-]))/gi;
+      let formatted = safe.replace(regex, m => `<span class="badge-oval-black">${m}</span>`);
+      if (type && String(type).trim().toUpperCase() === 'DEMO') {
+        if (!/(?<![A-Za-z0-9_-])\(?demo\)?(?![A-Za-z0-9_-])/i.test(text)) {
+          formatted += ' <span class="badge-oval-black">DEMO</span>';
+        }
+      }
+      return formatted;
+    }
+
+    function bcSetQty(n) {
+      document.getElementById('bc-input-qty').value = n;
+      document.querySelectorAll('.bc-btn-qty').forEach((btn, idx) => {
+        btn.className = (idx + 1 === n)
+          ? 'bc-btn-qty px-2 py-1.5 rounded-lg text-xs font-bold border transition-all bg-[#cb1415] text-white border-[#cb1415] shadow-xs'
+          : 'bc-btn-qty px-2 py-1.5 rounded-lg text-xs font-bold border transition-all bg-slate-100 border-slate-200 text-slate-700 hover:bg-red-50 hover:text-[#cb1415]';
+      });
+    }
+
+    function bcHandleCustomQtyChange() {
+      const val = parseInt(document.getElementById('bc-input-qty').value, 10) || 1;
+      bcSetQty(val >= 1 && val <= 10 ? val : 0);
+    }
+
+    function bcHandleCodeSearch(code) {
+      const fb = document.getElementById('bc-search-feedback');
+      const desc = document.getElementById('bc-lookup-desc');
+      if (!code) { fb.innerHTML = ''; desc.innerHTML = ''; return; }
+      const item = app.bc.masterItems.find(i => i.itemCode === code);
+      if (item) {
+        fb.innerHTML = '<span class="text-emerald-600 font-bold">✓ พบข้อมูล</span>';
+        desc.innerHTML = `<span class="font-bold text-slate-800">${bcFormatDescription(item.description, item.type)}</span><span class="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-brand-700 border border-slate-200">${escapeHtml(item.type)}</span>`;
+      } else {
+        fb.innerHTML = '<span class="text-brand-600 font-bold">! ยังไม่มีรหัสนี้</span>';
+        desc.innerHTML = `<button type="button" onclick="bcOpenNewItemModal('${escapeHtml(code)}')" class="text-brand-600 hover:underline font-bold">+ คลิกเพื่อลงทะเบียนไอเทมใหม่รหัส ${escapeHtml(code)} ทันที</button>`;
+      }
+    }
+
+    function bcHandleAddToQueue() {
+      const codeInput = document.getElementById('bc-input-code');
+      const qtyInput = document.getElementById('bc-input-qty');
+      const code = codeInput.value.trim();
+      const qty = parseInt(qtyInput.value, 10) || 1;
+      if (!code) return;
+
+      const item = app.bc.masterItems.find(i => i.itemCode === code);
+      if (!item) {
+        app.bc.pendingQueueItem = { itemCode: code, qty };
+        bcOpenNewItemModal(code);
+        showToast('ไม่พบรหัสสินค้าในแท็บ Data — กรุณาบันทึกไอเทมใหม่', 'info');
+        return;
+      }
+
+      const idx = app.bc.queue.findIndex(q => q.itemCode === code);
+      if (idx !== -1) {
+        const existing = app.bc.queue.splice(idx, 1)[0];
+        existing.qty += qty;
+        app.bc.queue.unshift(existing);
+      } else {
+        app.bc.queue.unshift({
+          itemCode: item.itemCode,
+          description: item.description,
+          type: item.type,
+          qty: qty,
+          date: app.bc.lockedDate
+        });
+      }
+
+      codeInput.value = '';
+      bcSetQty(1);
+      document.getElementById('bc-search-feedback').innerHTML = '';
+      document.getElementById('bc-lookup-desc').innerHTML = '';
+
+      bcRenderQueue();
+      scheduleCloudSync('barcode', { queue: app.bc.queue });
+      showToast(`เพิ่ม ${item.itemCode} จำนวน ${qty} ป้ายลงคิวแล้ว`, 'success');
+      codeInput.focus();
+    }
+
+    function bcRenderQueue() {
+      const empty = document.getElementById('bc-queue-empty');
+      const content = document.getElementById('bc-queue-content');
+      const wrapper = document.getElementById('bc-queue-table-wrapper');
+      const grid = document.getElementById('bc-preview-grid');
+
+      if (!app.bc.queue.length) {
+        empty.classList.remove('hidden');
+        content.classList.add('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      content.classList.remove('hidden');
+
+      const totalLabels = app.bc.queue.reduce((s, q) => s + (q.qty || 0), 0);
+      document.getElementById('bc-total-stickers').textContent = totalLabels;
+      document.getElementById('bc-total-sheets').textContent = Math.ceil(totalLabels / 20);
+
+      wrapper.innerHTML = `
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+            <tr>
+              <th class="p-3">Item Code</th>
+              <th class="p-3">Description</th>
+              <th class="p-3">TYPE</th>
+              <th class="p-3 text-center">จำนวน (ดวง)</th>
+              <th class="p-3 text-right">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${app.bc.queue.map((q, idx) => `
+              <tr class="hover:bg-slate-50/70">
+                <td class="p-3 font-mono font-bold text-slate-900">${escapeHtml(q.itemCode)}</td>
+                <td class="p-3 text-slate-700">${bcFormatDescription(q.description, q.type)}</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded-full bg-slate-100 font-bold text-[10px] text-brand-700 border border-slate-200">${escapeHtml(q.type)}</span></td>
+                <td class="p-3 text-center font-bold text-slate-900">${q.qty}</td>
+                <td class="p-3 text-right whitespace-nowrap">
+                  <button onclick="bcOpenQtyModal(${idx})" class="text-brand-600 hover:underline font-bold mr-2">แก้ไข</button>
+                  <button onclick="bcRemoveQueueItem(${idx})" class="text-rose-600 hover:underline font-semibold">ลบ</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      grid.innerHTML = '';
+      const limit = Math.min(8, app.bc.queue.length);
+      for (let i = 0; i < limit; i++) {
+        const q = app.bc.queue[i];
+        const cid = `bc-prev-svg-${i}`;
+        const card = document.createElement('div');
+        card.className = 'barcode-sticker-compact p-2 flex flex-col items-center justify-between text-center h-[96px] shadow-xs';
+        card.innerHTML = `
+          <div class="w-full flex justify-center"><svg id="${cid}" class="w-full max-h-[35px] mx-auto"></svg></div>
+          <div class="px-1 my-auto w-full"><p class="text-[9px] font-bold text-slate-900 leading-snug break-words">${bcFormatDescription(q.description, q.type)}</p></div>
+          <div class="flex items-center justify-center gap-1.5 border-t border-dashed border-slate-200 pt-0.5 text-[8px] text-slate-500 w-full">
+            <span class="text-slate-400">DATE:</span><span class="font-bold text-slate-800 font-mono">${escapeHtml(q.date)}</span>
+          </div>
+        `;
+        grid.appendChild(card);
+        try {
+          JsBarcode('#' + cid, q.itemCode, { format: 'CODE128', width: 1.15, height: 18, displayValue: true, fontSize: 8, font: 'Kanit', margin: 0, textMargin: 1 });
+        } catch (e) {}
+      }
+    }
+
+    function bcRemoveQueueItem(idx) {
+      app.bc.queue.splice(idx, 1);
+      bcRenderQueue();
+      scheduleCloudSync('barcode', { queue: app.bc.queue }, true);
+      showToast('ลบรายการออกจากคิวพิมพ์แล้ว', 'info');
+    }
+
+    function bcOpenQtyModal(idx) {
+      const q = app.bc.queue[idx];
+      if (!q) return;
+      document.getElementById('bc-edit-qty-idx').value = idx;
+      document.getElementById('bc-edit-qty-info').textContent = `${q.itemCode} - ${q.description}`;
+      const inp = document.getElementById('bc-edit-qty-input');
+      inp.value = q.qty || 1;
+      document.getElementById('bc-modal-qty').classList.remove('hidden');
+      setTimeout(() => { inp.focus(); inp.select(); }, 80);
+    }
+
+    function bcCloseQtyModal() {
+      document.getElementById('bc-modal-qty').classList.add('hidden');
+    }
+
+    function bcSaveQtyModal() {
+      const idx = parseInt(document.getElementById('bc-edit-qty-idx').value, 10);
+      const qty = parseInt(document.getElementById('bc-edit-qty-input').value, 10);
+      if (isNaN(idx) || !app.bc.queue[idx] || isNaN(qty) || qty < 1) return;
+      app.bc.queue[idx].qty = qty;
+      bcCloseQtyModal();
+      bcRenderQueue();
+      scheduleCloudSync('barcode', { queue: app.bc.queue });
+      showToast(`อัปเดตจำนวนเป็น ${qty} ดวงเรียบร้อย`, 'success');
+    }
+
+    function bcClearQueue() {
+      if (!app.bc.queue.length) return;
+      showConfirmModal('ล้างรายการพิมพ์บาร์โค้ด', 'ต้องการล้างรายการทั้งหมดในคิวพิมพ์ใช่หรือไม่? (จะซิงค์ล้างทุกเครื่อง)', (ok) => {
+        if (!ok) return;
+        app.bc.queue = [];
+        bcRenderQueue();
+        scheduleCloudSync('barcode', { queue: [] }, true);
+        showToast('ล้างรายการพิมพ์บาร์โค้ดเรียบร้อย', 'info');
+      });
+    }
+
+    function bcSetTypeFilter(type) {
+      app.bc.selectedType = type;
+      const types = ['ALL', 'DEMO', 'MB', 'Gadget', 'ACC', 'PM', 'AIS'];
+      document.querySelectorAll('.bc-btn-filter').forEach((btn, idx) => {
+        btn.className = (types[idx] === type)
+          ? 'bc-btn-filter px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all bg-[#cb1415] text-white border-[#cb1415] shadow-xs'
+          : 'bc-btn-filter px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all bg-white border-slate-200 text-slate-700 hover:bg-red-50 hover:text-[#cb1415]';
+      });
+      bcRenderMasterTable();
+    }
+
+    function bcToggleSort() {
+      app.bc.sortOrder = app.bc.sortOrder === 'newest' ? 'oldest' : 'newest';
+      document.getElementById('bc-sort-icon').textContent = app.bc.sortOrder === 'newest' ? '⬇️' : '⬆️';
+      document.getElementById('bc-sort-label').textContent = app.bc.sortOrder === 'newest' ? 'เรียง: ใหม่สุด ➔ เก่าสุด' : 'เรียง: เก่าสุด ➔ ใหม่สุด';
+      bcRenderMasterTable();
+    }
+
+    function bcRenderMasterTable() {
+      const tbody = document.getElementById('bc-master-tbody');
+      const q = (document.getElementById('bc-search-master')?.value || '').toLowerCase().trim();
+      let filtered = app.bc.masterItems.filter(i => {
+        const matchQ = i.itemCode.toLowerCase().includes(q) || i.description.toLowerCase().includes(q) || i.type.toLowerCase().includes(q);
+        const matchT = app.bc.selectedType === 'ALL' || i.type.toUpperCase() === app.bc.selectedType.toUpperCase();
+        return matchQ && matchT;
+      });
+      if (app.bc.sortOrder === 'newest') filtered = [...filtered].reverse();
+      document.getElementById('bc-master-count').textContent = `${filtered.length} รายการ`;
+
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">ไม่พบรายการสินค้า</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(item => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3 font-mono font-bold text-slate-900">${escapeHtml(item.itemCode)}</td>
+          <td class="p-3 text-slate-700 max-w-xs truncate">${bcFormatDescription(item.description, item.type)}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded-full bg-slate-100 font-bold text-[10px] text-brand-700 border border-slate-200">${escapeHtml(item.type)}</span></td>
+          <td class="p-3 text-right whitespace-nowrap">
+            <button onclick="bcOpenEditItemModal('${escapeHtml(item.itemCode)}')" class="px-2 py-1 rounded-lg text-xs font-semibold text-brand-700 hover:bg-brand-50">✏️ แก้ไข</button>
+            <button onclick="bcDeleteMasterItem('${escapeHtml(item.itemCode)}')" class="px-2 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50">🗑️</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function bcApplySmartType() {
+      const code = document.getElementById('bc-modal-code').value.trim();
+      const desc = document.getElementById('bc-modal-desc').value.trim();
+      const sel = document.getElementById('bc-modal-type');
+      const hint = document.getElementById('bc-modal-type-hint');
+      if (!code && !desc) { hint.textContent = ''; return; }
+      if (/(?<![A-Za-z0-9_-])\(?demo\)?(?![A-Za-z0-9_-])/i.test(desc)) {
+        hint.textContent = '⚡ พบ DEMO ในชื่อ แนะนำ: DEMO';
+        sel.value = 'DEMO';
+        return;
+      }
+      if (code.startsWith('101')) { hint.textContent = '⚡ แนะนำ: MB หรือ DEMO'; if (sel.value !== 'MB' && sel.value !== 'DEMO') sel.value = 'MB'; }
+      else if (code.startsWith('102')) { hint.textContent = '⚡ แนะนำ: Gadget หรือ ACC'; if (sel.value !== 'Gadget' && sel.value !== 'ACC') sel.value = 'Gadget'; }
+      else if (code.startsWith('105')) { hint.textContent = '⚡ แนะนำ: PM'; sel.value = 'PM'; }
+      else if (code.startsWith('104')) { hint.textContent = '⚡ แนะนำ: AIS'; sel.value = 'AIS'; }
+      else hint.textContent = '';
+    }
+
+    function bcOpenNewItemModal(prefillCode = '') {
+      document.getElementById('bc-modal-mode').value = 'create';
+      document.getElementById('bc-modal-orig-code').value = '';
+      document.getElementById('bc-modal-title').textContent = 'บันทึก Item สินค้าใหม่';
+      document.getElementById('bc-modal-code').value = prefillCode;
+      document.getElementById('bc-modal-desc').value = '';
+      document.getElementById('bc-modal-type').value = '';
+      bcApplySmartType();
+      document.getElementById('bc-modal-item').classList.remove('hidden');
+      setTimeout(() => (prefillCode ? document.getElementById('bc-modal-desc') : document.getElementById('bc-modal-code')).focus(), 80);
+    }
+
+    function bcOpenEditItemModal(code) {
+      const item = app.bc.masterItems.find(i => i.itemCode === code);
+      if (!item) return;
+      document.getElementById('bc-modal-mode').value = 'edit';
+      document.getElementById('bc-modal-orig-code').value = item.itemCode;
+      document.getElementById('bc-modal-title').textContent = `แก้ไขสินค้า (${item.itemCode})`;
+      document.getElementById('bc-modal-code').value = item.itemCode;
+      document.getElementById('bc-modal-desc').value = item.description;
+      document.getElementById('bc-modal-type').value = item.type;
+      bcApplySmartType();
+      document.getElementById('bc-modal-item').classList.remove('hidden');
+    }
+
+    function bcCloseItemModal() {
+      document.getElementById('bc-modal-item').classList.add('hidden');
+      app.bc.pendingQueueItem = null;
+    }
+
+    async function bcHandleSaveItemModal() {
+      const mode = document.getElementById('bc-modal-mode').value;
+      const origCode = document.getElementById('bc-modal-orig-code').value;
+      const code = document.getElementById('bc-modal-code').value.trim();
+      const desc = document.getElementById('bc-modal-desc').value.trim();
+      const type = document.getElementById('bc-modal-type').value;
+      if (!code || !desc || !type) { showToast('กรุณากรอกข้อมูลให้ครบทุกช่อง', 'error'); return; }
+
+      const btn = document.getElementById('bc-btn-save-item');
+      btn.disabled = true;
+      btn.textContent = 'กำลังบันทึก...';
+      const itemObj = { itemCode: code, description: desc, type };
+
+      try {
+        const res = mode === 'create'
+          ? await callApi('bc_saveItem', { item: itemObj })
+          : await callApi('bc_updateItem', { oldCode: origCode, item: itemObj });
+
+        if (res && res.success) {
+          if (mode === 'create') {
+            app.bc.masterItems.push(res.item || itemObj);
+          } else {
+            const i = app.bc.masterItems.findIndex(x => x.itemCode === origCode);
+            if (i !== -1) app.bc.masterItems[i] = res.item || itemObj;
+            app.bc.queue.forEach(q => {
+              if (q.itemCode === origCode) { q.itemCode = code; q.description = desc; q.type = type; }
+            });
+            bcRenderQueue();
+          }
+          try { localStorage.setItem(STORAGE.BC_CACHE, JSON.stringify(app.bc.masterItems)); } catch (e) {}
+          bcRenderMasterTable();
+          const pending = app.bc.pendingQueueItem;
+          bcCloseItemModal();
+          showToast(res.message || 'บันทึกไอเทมสำเร็จ', 'success');
+
+          if (pending && pending.itemCode === code) {
+            app.bc.queue.unshift({ itemCode: code, description: desc, type, qty: pending.qty || 1, date: app.bc.lockedDate });
+            bcRenderQueue();
+            scheduleCloudSync('barcode', { queue: app.bc.queue });
+          }
+        } else {
+          showToast(res?.message || 'บันทึกไม่สำเร็จ', 'error');
+        }
+      } catch (err) {
+        if (err.message !== 'UNAUTHORIZED') showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'บันทึกลงชีต Data';
+      }
+    }
+
+    function bcDeleteMasterItem(code) {
+      showConfirmModal('ลบข้อมูลสินค้า', `ต้องการลบรหัส ${code} ออกจากแท็บ Data ใช่หรือไม่?`, async (ok) => {
+        if (!ok) return;
+        try {
+          const res = await callApi('bc_deleteItem', { code });
+          if (res && res.success) {
+            app.bc.masterItems = app.bc.masterItems.filter(i => i.itemCode !== code);
+            try { localStorage.setItem(STORAGE.BC_CACHE, JSON.stringify(app.bc.masterItems)); } catch (e) {}
+            bcRenderMasterTable();
+            showToast(res.message || `ลบรหัส ${code} แล้ว`, 'success');
+          } else {
+            showToast(res?.message || 'ลบไม่สำเร็จ', 'error');
+          }
+        } catch (err) {
+          if (err.message !== 'UNAUTHORIZED') showToast('ลบข้อมูลไม่สำเร็จ', 'error');
+        }
+      });
+    }
+
+    function bcBuildCutLinesSvg() {
+      const horizY = [28, 58, 88, 118, 148, 178];
+      const vertX = [18.5, 83.5, 148.5, 213.5, 278.5];
+      let svg = '<svg class="cut-lines-svg" viewBox="0 0 297 206" style="position:absolute;left:0;top:0;width:297mm;height:206mm;pointer-events:none;z-index:1;">';
+      horizY.forEach(y => { svg += `<line x1="6" y1="${y}" x2="291" y2="${y}" stroke="#64748b" stroke-width="0.38" stroke-dasharray="2.5,2.2" />`; });
+      vertX.forEach(x => { svg += `<line x1="${x}" y1="10" x2="${x}" y2="196" stroke="#64748b" stroke-width="0.38" stroke-dasharray="2.5,2.2" />`; });
+      return svg + '</svg>';
+    }
+
+    function bcBuildLandscapePageHtml(pageItems, prefix) {
+      let html = bcBuildCutLinesSvg();
+      html += '<div style="position:absolute;left:18.5mm;top:28mm;width:260mm;height:150mm;display:grid;grid-template-columns:repeat(4,65mm);grid-template-rows:repeat(5,30mm);z-index:2;">';
+      pageItems.forEach((stk, idx) => {
+        html += `
+          <div style="width:65mm;height:30mm;padding:5mm;box-sizing:border-box;">
+            <div class="barcode-sticker-print">
+              <div style="width:100%;height:8.5mm;display:flex;align-items:center;justify-content:center;overflow:hidden;line-height:1;">
+                <svg id="${prefix}-${idx}" style="width:90%;max-width:40mm;height:8.5mm;display:block;margin:0 auto;"></svg>
+              </div>
+              <div style="width:100%;height:5.5mm;display:flex;align-items:center;justify-content:center;text-align:center;font-size:6.8px;font-weight:700;color:#0f172a;line-height:1.1;overflow:hidden;word-break:break-word;">
+                ${bcFormatDescription(stk.description, stk.type)}
+              </div>
+              <div style="width:100%;height:3.5mm;display:flex;align-items:center;justify-content:center;gap:4px;border-top:0.5px dashed #64748b;font-size:6.2px;font-weight:600;color:#334155;">
+                <span style="font-size:5.8px;color:#64748b;">DATE:</span>
+                <span style="font-family:monospace;font-weight:700;color:#0f172a;">${escapeHtml(stk.date)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      return html + '</div>';
+    }
+
+    function bcRenderSvgBatch(pageItems, prefix) {
+      pageItems.forEach((stk, idx) => {
+        try {
+          JsBarcode(`#${prefix}-${idx}`, stk.itemCode, { format: 'CODE128', width: 0.95, height: 16, displayValue: true, fontSize: 7.5, font: 'monospace', margin: 0, textMargin: 0.5 });
+        } catch (e) {}
+      });
+    }
+
+    function bcExpandAllStickers() {
+      const all = [];
+      app.bc.queue.forEach(item => {
+        const count = parseInt(item.qty, 10) || 0;
+        for (let i = 0; i < count; i++) all.push(item);
+      });
+      return all;
+    }
+
+    function bcOpenPrintPreview() {
+      const all = bcExpandAllStickers();
+      if (!all.length) { showToast('กรุณาเพิ่มรายการสินค้าที่ต้องการพิมพ์ก่อน', 'error'); return; }
+      const previewItems = all.slice(0, 20);
+      document.getElementById('bc-modal-preview').classList.remove('hidden');
+      document.getElementById('bc-modal-preview-sheet').innerHTML = bcBuildLandscapePageHtml(previewItems, 'bc-prev-page');
+      bcRenderSvgBatch(previewItems, 'bc-prev-page');
+    }
+
+    function bcClosePrintPreview() {
+      document.getElementById('bc-modal-preview').classList.add('hidden');
+    }
+
+    function bcExecutePrint() {
+      const all = bcExpandAllStickers();
+      if (!all.length) { showToast('กรุณาเพิ่มรายการสินค้าที่ต้องการพิมพ์ก่อน', 'error'); return; }
+      bcClosePrintPreview();
+
+      const area = document.getElementById('print-area-barcode');
+      area.innerHTML = '';
+      const totalPages = Math.ceil(all.length / 20);
+      for (let p = 0; p < totalPages; p++) {
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'page-landscape';
+        const slice = all.slice(p * 20, (p + 1) * 20);
+        pageDiv.innerHTML = bcBuildLandscapePageHtml(slice, `bc-print-${p}`);
+        area.appendChild(pageDiv);
+      }
+      for (let p = 0; p < totalPages; p++) {
+        bcRenderSvgBatch(all.slice(p * 20, (p + 1) * 20), `bc-print-${p}`);
+      }
+      runScopedPrint('barcode');
+    }
+
+    /* ==========================================================================
+       6. MODULE 2: LOCK PHONE (RKB)
+       ========================================================================== */
+    async function lpLoadModule(forceRefresh = false) {
+      if (app.lp.loading) return;
+      app.lp.loading = true;
+      const spinner = document.getElementById('lp-sync-spinner');
+      if (spinner) spinner.classList.add('animate-spin');
+
+      if (!forceRefresh && !app.lp.loaded) {
+        try {
+          const cached = JSON.parse(localStorage.getItem(STORAGE.LP_CACHE) || 'null');
+          if (cached && Array.isArray(cached.masterItems)) {
+            app.lp.masterItems = cached.masterItems;
+            if (cached.logoDataUrl) app.lp.logoDataUrl = cached.logoDataUrl;
+            lpRenderMasterTable();
+          }
+        } catch (e) {}
+      }
+
+      try {
+        const res = await callApi('lp_bootstrap', { forceRefresh });
+        if (res && res.success) {
+          app.lp.loaded = true;
+          if (res.config) {
+            if (!app.lp.items.length) {
+              app.lp.sub = res.config.sub || '1480';
+              app.lp.branch = res.config.branch || 'โรบินสันสุรินทร์';
+              document.getElementById('lp-sub').value = app.lp.sub;
+              document.getElementById('lp-branch').value = app.lp.branch;
+            }
+            app.lp.currentSeq = res.config.currentSeq || 1;
+            app.lp.currentYYMM = res.config.currentYYMM || defaultYYMM;
+          }
+          app.lp.masterItems = res.masterItems || [];
+          if (res.logoDataUrl) app.lp.logoDataUrl = res.logoDataUrl;
+          try {
+            localStorage.setItem(STORAGE.LP_CACHE, JSON.stringify({
+              masterItems: app.lp.masterItems,
+              logoDataUrl: app.lp.logoDataUrl
+            }));
+          } catch (e) {}
+          lpRenderMasterTable();
+          lpRenderItemsTable();
+          if (res.syncQueue) applyCloudSyncPayload('lockphone', res.syncQueue, false);
+          if (forceRefresh) showToast(`รีเฟรชข้อมูล Lock Phone สำเร็จ (${app.lp.masterItems.length} รายการ)`, 'success');
+        }
+      } catch (err) {
+        if (err.message !== 'UNAUTHORIZED') showToast('โหลดข้อมูล Lock Phone ไม่สำเร็จ: ' + err.message, 'error');
+      } finally {
+        app.lp.loading = false;
+        if (spinner) spinner.classList.remove('animate-spin');
+      }
+    }
+
+    function lpGetSub() {
+      const v = document.getElementById('lp-sub').value.trim();
+      return v ? String(v).padStart(4, '0') : '1480';
+    }
+
+    function lpGenJobNo(sub, seq) {
+      return `75${String(sub).padStart(4, '0')}${app.lp.currentYYMM}${String(seq).padStart(5, '0')}`;
+    }
+
+    function lpOnMetaChange() {
+      app.lp.sub = document.getElementById('lp-sub').value.trim();
+      app.lp.branch = document.getElementById('lp-branch').value.trim();
+      app.lp.senderName = document.getElementById('lp-sender').value.trim();
+      lpRenderItemsTable();
+      scheduleCloudSync('lockphone', {
+        sub: app.lp.sub, branch: app.lp.branch, senderName: app.lp.senderName, items: app.lp.items
+      });
+    }
+
+    function lpHandleAddItem() {
+      const codeEl = document.getElementById('lp-scan-code');
+      const descEl = document.getElementById('lp-scan-desc');
+      const imeiEl = document.getElementById('lp-scan-imei');
+      const code = codeEl.value.trim();
+      let desc = descEl.value.trim();
+      const imei = imeiEl.value.trim();
+
+      if (!desc && code) {
+        const match = app.lp.masterItems.find(p => String(p.itemCode).toLowerCase() === code.toLowerCase());
+        desc = match ? match.description : code;
+      }
+      if (!desc && !code) {
+        showToast('กรุณาสแกนหรือพิมพ์รหัสสินค้า', 'error');
+        codeEl.focus();
+        return;
+      }
+
+      app.lp.items.push({ code, name: desc || code, imei: imei || '-' });
+      codeEl.value = '';
+      descEl.value = '';
+      imeiEl.value = '';
+      codeEl.focus();
+
+      lpRenderItemsTable();
+      scheduleCloudSync('lockphone', {
+        sub: lpGetSub(), branch: document.getElementById('lp-branch').value.trim(), senderName: document.getElementById('lp-sender').value.trim(), items: app.lp.items
+      });
+      showToast('เพิ่มรายการส่งกล่องเรียบร้อย', 'success');
+    }
+
+    function lpRenderItemsTable() {
+      const tbody = document.getElementById('lp-items-tbody');
+      const count = app.lp.items.length;
+      document.getElementById('lp-count-badge').textContent = `${count} รายการ`;
+      document.getElementById('lp-pages-summary').textContent = `${Math.ceil(count / 12) || 1} หน้า (หน้าละ 12 แถวตายตัว)`;
+
+      if (!count) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-slate-400">ยังไม่มีรายการ</td></tr>';
+        lpRenderPreview();
+        return;
+      }
+
+      const sub = lpGetSub();
+      tbody.innerHTML = app.lp.items.map((item, idx) => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-2.5 px-3 text-center font-bold text-slate-500">${idx + 1}</td>
+          <td class="py-2.5 px-4 font-sarabun">
+            <input type="text" value="${escapeHtml(item.name)}" onchange="lpUpdateRow(${idx},'name',this.value)" class="w-full bg-transparent border-b border-transparent hover:border-slate-300 focus:border-brand-600 outline-none text-sm py-0.5" />
+          </td>
+          <td class="py-2.5 px-4 font-mono">
+            <input type="text" value="${escapeHtml(item.imei)}" onchange="lpUpdateRow(${idx},'imei',this.value)" class="w-full bg-transparent border-b border-transparent hover:border-slate-300 focus:border-brand-600 outline-none text-sm py-0.5 font-mono" />
+          </td>
+          <td class="py-2.5 px-4 font-mono font-bold text-brand-600 text-xs">${lpGenJobNo(sub, app.lp.currentSeq + idx)}</td>
+          <td class="py-2.5 px-3 text-center">
+            <button onclick="lpRemoveRow(${idx})" class="text-slate-400 hover:text-red-600 font-bold p-1">✕</button>
+          </td>
+        </tr>
+      `).join('');
+      lpRenderPreview();
+    }
+
+    function lpUpdateRow(idx, field, val) {
+      if (!app.lp.items[idx]) return;
+      app.lp.items[idx][field] = val;
+      lpRenderPreview();
+      scheduleCloudSync('lockphone', {
+        sub: lpGetSub(), branch: document.getElementById('lp-branch').value.trim(), senderName: document.getElementById('lp-sender').value.trim(), items: app.lp.items
+      });
+    }
+
+    function lpRemoveRow(idx) {
+      app.lp.items.splice(idx, 1);
+      lpRenderItemsTable();
+      scheduleCloudSync('lockphone', {
+        sub: lpGetSub(), branch: document.getElementById('lp-branch').value.trim(), senderName: document.getElementById('lp-sender').value.trim(), items: app.lp.items
+      }, true);
+    }
+
+    function lpPromptNewBatch() { lpConfirmClearList(); }
+
+    function lpConfirmClearList() {
+      if (!app.lp.items.length) return;
+      showConfirmModal('ล้างรายการส่งกล่อง', 'ต้องการล้างรายการทั้งหมดในใบงานนี้ใช่หรือไม่? (จะซิงค์ล้างทุกเครื่อง)', (ok) => {
+        if (!ok) return;
+        app.lp.items = [];
+        lpRenderItemsTable();
+        scheduleCloudSync('lockphone', {
+          sub: lpGetSub(), branch: document.getElementById('lp-branch').value.trim(), senderName: document.getElementById('lp-sender').value.trim(), items: []
+        }, true);
+        showToast('ล้างรายการส่งกล่องเรียบร้อย', 'info');
+      });
+    }
+
+    function lpBuildA4Html(isPreview, override = null) {
+      const sub = override ? override.sub : lpGetSub();
+      const branch = override ? override.branch : (document.getElementById('lp-branch').value.trim() || 'โรบินสันสุรินทร์');
+      const sender = override ? override.senderName : document.getElementById('lp-sender').value.trim();
+      const sendDate = (override && override.sendDate)
+        ? override.sendDate
+        : new Date().toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+      const records = (override && Array.isArray(override.records))
+        ? override.records
+        : app.lp.items.map((item, idx) => ({
+            index: idx + 1, name: item.name, imei: item.imei, jobNo: lpGenJobNo(sub, app.lp.currentSeq + idx)
+          }));
+
+      const totalPages = Math.ceil(records.length / 12) || 1;
+      const primaryLogo = app.lp.logoDataUrl || LP_LOGO_FALLBACK_1;
+      const fallbackLogo = app.lp.logoDataUrl ? LP_LOGO_FALLBACK_1 : LP_LOGO_FALLBACK_2;
+      const logoTag = `<img src="${primaryLogo}" alt="Jaymart" class="h-10 sm:h-12 object-contain" onerror="this.onerror=null;this.src='${fallbackLogo}';" />`;
+
+      let html = '';
+      for (let p = 0; p < totalPages; p++) {
+        const pageItems = records.slice(p * 12, (p + 1) * 12);
+        let rowsHtml = '';
+        for (let r = 0; r < 12; r++) {
+          const item = pageItems[r];
+          rowsHtml += `
+            <tr class="h-[34px] text-[13px] font-sarabun">
+              <td class="text-center font-bold text-black font-sarabun">${item ? (p * 12 + r + 1) : '&nbsp;'}</td>
+              <td class="px-3 py-1 text-left text-black leading-tight break-words font-sarabun">${item ? escapeHtml(item.name) : '&nbsp;'}</td>
+              <td class="px-2 text-center font-sarabun text-black text-[13px] whitespace-nowrap">${item ? escapeHtml(item.imei) : '&nbsp;'}</td>
+              <td class="px-2 text-center font-sarabun text-black font-semibold text-[13px] whitespace-nowrap tracking-wide">${item ? escapeHtml(item.jobNo) : '&nbsp;'}</td>
+            </tr>
+          `;
+        }
+        const cls = isPreview ? 'sheet-a4-preview text-black bg-white font-sarabun' : 'page-break-box text-black bg-white font-sarabun';
+        html += `
+          <div class="${cls}" style="font-family:'Sarabun',sans-serif !important;">
+            <div class="flex justify-between items-start mb-2"><div class="pt-1">${logoTag}</div></div>
+            <div class="text-center mt-1 mb-4 font-sarabun">
+              <h2 class="text-[20px] font-bold text-black leading-snug font-sarabun">แบบฟอร์มการส่งกล่องเปล่าเครื่อง Lock Phone</h2>
+              <h3 class="text-[14px] font-bold text-black mt-1 font-sarabun">สินเชื่อ RKB บริษัท ร็อกเก็ตบูส จำกัด (สำนักงานใหญ่)</h3>
+            </div>
+            <div class="w-full flex text-[14px] text-black mt-3 mb-4 font-sarabun items-baseline">
+              <div class="w-12 text-center font-semibold">Sub</div>
+              <div class="flex-1 px-4 font-bold text-[15px]">${escapeHtml(sub)}</div>
+              <div class="w-[140px] text-center font-semibold">ชื่อสาขา</div>
+              <div class="w-[145px] text-center font-bold text-[15px]">${escapeHtml(branch)}</div>
+            </div>
+            <div class="border-[1.5px] border-black">
+              <table class="print-table table-fixed w-full font-sarabun">
+                <thead>
+                  <tr class="font-bold text-[13px] text-center text-black bg-white font-sarabun">
+                    <th class="py-2 w-12">ลำดับที่</th>
+                    <th class="py-2 px-3">รายการสินค้า</th>
+                    <th class="py-2 w-[140px]">IMEI</th>
+                    <th class="py-2 w-[145px] tracking-wide">เลข Job</th>
+                  </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+            </div>
+            <div class="mt-7 pt-2 font-sarabun">
+              <div class="grid grid-cols-2 gap-x-8 gap-y-4 px-2 text-[13px] font-medium text-black whitespace-nowrap font-sarabun">
+                <div class="flex items-baseline"><span>ผู้ส่งสินค้า</span><span class="border-b border-dotted border-black flex-1 mx-2 text-center font-bold pb-0.5">${escapeHtml(sender) || '&nbsp;'}</span><span>(ตัวบรรจง)</span></div>
+                <div class="flex items-baseline"><span>วันที่ส่ง</span><span class="border-b border-dotted border-black flex-1 ml-2 text-center font-bold pb-0.5">${escapeHtml(sendDate)}</span></div>
+                <div class="flex items-baseline"><span>ผู้รับสินค้า</span><span class="border-b border-dotted border-black flex-1 mx-2 text-center pb-0.5">&nbsp;</span><span>แผนก service</span></div>
+                <div class="flex items-baseline"><span>วันที่รับ</span><span class="border-b border-dotted border-black flex-1 ml-2 text-center pb-0.5">&nbsp;</span></div>
+              </div>
+              <div class="mt-4 border border-black py-1.5 px-3 text-center text-[12px] font-bold text-black font-sarabun">
+                หากส่งกล่องเปล่าแต่ไม่เขียนแบบฟอร์มมาด้วย ทางฝ่ายเคลมจะไม่รับผิดชอบในกรณีสินค้าหาย
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      return html;
+    }
+
+    function lpRenderPreview() {
+      const wrap = document.getElementById('lp-preview-a4');
+      if (!app.lp.items.length) {
+        wrap.innerHTML = '<div class="bg-white p-8 rounded-2xl text-center text-slate-400 max-w-md shadow-sm"><span class="text-3xl block mb-2">📋</span><p class="font-bold text-slate-700 text-sm mb-1">ยังไม่มีรายการสินค้า</p><p class="text-xs">เมื่อเพิ่มรายการด้านบน ตัวอย่าง A4 จะแสดงที่นี่ทันที</p></div>';
+        return;
+      }
+      wrap.innerHTML = lpBuildA4Html(true);
+    }
+
+    function lpHandleSaveAndPrint() {
+      if (app.lp.isSaving) return;
+      if (!app.lp.items.length) { showToast('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการก่อนสั่งพิมพ์', 'error'); return; }
+      showConfirmModal('บันทึกและสั่งพิมพ์เอกสาร', `ระบบจะรันเลข Job จำนวน ${app.lp.items.length} เครื่อง บันทึกลงชีต และเปิดหน้าพิมพ์ทันที ยืนยันหรือไม่?`, (ok) => {
+        if (ok) lpExecuteSaveAndPrint();
+      });
+    }
+
+    async function lpExecuteSaveAndPrint() {
+      app.lp.isSaving = true;
+      const btn = document.getElementById('lp-btn-save-print');
+      const lbl = document.getElementById('lp-btn-save-print-label');
+      btn.disabled = true;
+      lbl.textContent = '⏳ กำลังบันทึกเลข Job...';
+
+      const sub = lpGetSub();
+      const branch = document.getElementById('lp-branch').value.trim() || 'โรบินสันสุรินทร์';
+      const sender = document.getElementById('lp-sender').value.trim();
+      const sendDate = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+      try {
+        const res = await callApi('lp_saveShipmentData', {
+          payload: { sub, branch, senderName: sender, sendDate, items: app.lp.items }
+        });
+        if (!res || !res.success) {
+          showToast('บันทึกไม่สำเร็จ: ' + (res?.message || 'เกิดข้อผิดพลาด'), 'error');
+          return;
+        }
+
+        document.getElementById('print-area-lockphone').innerHTML = lpBuildA4Html(false, {
+          records: res.records, sub: res.sub, branch: res.branch, senderName: res.senderName, sendDate: res.sendDate
+        });
+        if (res.nextSeq) app.lp.currentSeq = res.nextSeq;
+        if (res.currentYYMM) app.lp.currentYYMM = res.currentYYMM;
+
+        app.lp.items = [];
+        lpRenderItemsTable();
+        scheduleCloudSync('lockphone', { sub, branch, senderName: sender, items: [] }, true);
+        showToast(`บันทึกเลข Job เรียบร้อย (${res.records.length} รายการ)`, 'success');
+        runScopedPrint('lockphone');
+      } catch (err) {
+        if (err.message !== 'UNAUTHORIZED') showToast('บันทึกไม่สำเร็จ: ' + err.message, 'error');
+      } finally {
+        app.lp.isSaving = false;
+        btn.disabled = false;
+        lbl.textContent = '🖨️ บันทึกและพิมพ์ทันที (PDF)';
+      }
+    }
+
+    function lpTriggerPrintOnly() {
+      if (!app.lp.items.length) { showToast('ไม่มีรายการสินค้าสำหรับพิมพ์', 'error'); return; }
+      document.getElementById('print-area-lockphone').innerHTML = lpBuildA4Html(false);
+      runScopedPrint('lockphone');
+    }
+
+    function lpRenderMasterTable() {
+      const tbody = document.getElementById('lp-master-tbody');
+      const dl = document.getElementById('lp-products-datalist');
+      const q = (document.getElementById('lp-search-master')?.value || '').toLowerCase().trim();
+      document.getElementById('lp-master-count').textContent = `${app.lp.masterItems.length} รายการ`;
+      dl.innerHTML = app.lp.masterItems.map(p => `<option value="${escapeHtml(p.itemCode)}">${escapeHtml(p.description)}</option>`).join('');
+
+      let filtered = app.lp.masterItems;
+      if (q) filtered = filtered.filter(i => String(i.itemCode).toLowerCase().includes(q) || String(i.description).toLowerCase().includes(q));
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">ไม่พบรายการสินค้า</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(item => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3 font-mono font-bold text-brand-600">${escapeHtml(item.itemCode)}</td>
+          <td class="p-3 text-slate-800 font-medium">${escapeHtml(item.description)}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded-full bg-slate-100 font-bold text-[10px] text-brand-700 border border-slate-200">${escapeHtml(item.type || 'Lock Phone')}</span></td>
+          <td class="p-3 text-right whitespace-nowrap">
+            <button data-code="${escapeHtml(item.itemCode)}" onclick="lpOpenEditItemModal(this.dataset.code)" class="px-2 py-1 rounded-lg text-brand-700 hover:bg-brand-50">✏️</button>
+            <button data-code="${escapeHtml(item.itemCode)}" onclick="lpDeleteMasterItem(this.dataset.code)" class="px-2 py-1 rounded-lg text-rose-600 hover:bg-rose-50">🗑️</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function lpOpenNewItemModal() {
+      document.getElementById('lp-modal-mode').value = 'create';
+      document.getElementById('lp-modal-orig-code').value = '';
+      document.getElementById('lp-modal-title').textContent = 'บันทึก Item สินค้าใหม่';
+      document.getElementById('lp-modal-code').value = '';
+      document.getElementById('lp-modal-desc').value = '';
+      document.getElementById('lp-modal-type').value = 'Lock Phone';
+      document.getElementById('lp-modal-item').classList.remove('hidden');
+      setTimeout(() => document.getElementById('lp-modal-code').focus(), 80);
+    }
+
+    function lpOpenEditItemModal(code) {
+      const item = app.lp.masterItems.find(i => String(i.itemCode) === String(code));
+      if (!item) return;
+      document.getElementById('lp-modal-mode').value = 'edit';
+      document.getElementById('lp-modal-orig-code').value = item.itemCode;
+      document.getElementById('lp-modal-title').textContent = `แก้ไขสินค้า (${item.itemCode})`;
+      document.getElementById('lp-modal-code').value = item.itemCode;
+      document.getElementById('lp-modal-desc').value = item.description;
+      document.getElementById('lp-modal-type').value = item.type || 'Lock Phone';
+      document.getElementById('lp-modal-item').classList.remove('hidden');
+    }
+
+    function lpCloseItemModal() { document.getElementById('lp-modal-item').classList.add('hidden'); }
+
+    async function lpHandleSaveItemModal() {
+      const mode = document.getElementById('lp-modal-mode').value;
+      const origCode = document.getElementById('lp-modal-orig-code').value;
+      const code = document.getElementById('lp-modal-code').value.trim();
+      const desc = document.getElementById('lp-modal-desc').value.trim();
+      const type = document.getElementById('lp-modal-type').value.trim() || 'Lock Phone';
+      if (!code || !desc) { showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error'); return; }
+
+      const btn = document.getElementById('lp-btn-save-item');
+      btn.disabled = true;
+      btn.textContent = 'กำลังบันทึก...';
+      const obj = { itemCode: code, description: desc, type };
+
+      try {
+        const res = mode === 'create'
+          ? await callApi('lp_saveMasterItem', { item: obj })
+          : await callApi('lp_updateMasterItem', { oldCode: origCode, item: obj });
+        if (res && res.success) {
+          if (mode === 'create') app.lp.masterItems.push(res.item || obj);
+          else {
+            const idx = app.lp.masterItems.findIndex(i => String(i.itemCode) === String(origCode));
+            if (idx !== -1) app.lp.masterItems[idx] = res.item || obj;
+          }
+          try { localStorage.setItem(STORAGE.LP_CACHE, JSON.stringify({ masterItems: app.lp.masterItems, logoDataUrl: app.lp.logoDataUrl })); } catch (e) {}
+          lpRenderMasterTable();
+          lpCloseItemModal();
+          showToast(res.message || 'บันทึกข้อมูลสินค้าเรียบร้อย', 'success');
+        } else {
+          showToast(res?.message || 'เกิดข้อผิดพลาด', 'error');
+        }
+      } catch (err) {
+        if (err.message !== 'UNAUTHORIZED') showToast('เชื่อมต่อชีตไม่สำเร็จ', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'บันทึกลงชีต';
+      }
+    }
+
+    function lpDeleteMasterItem(code) {
+      showConfirmModal('ลบข้อมูลสินค้า', `ต้องการลบรหัส ${code} ออกจาก Data_สินค้า ใช่หรือไม่?`, async (ok) => {
+        if (!ok) return;
+        try {
+          const res = await callApi('lp_deleteMasterItem', { code });
+          if (res && res.success) {
+            app.lp.masterItems = app.lp.masterItems.filter(i => String(i.itemCode) !== String(code));
+            lpRenderMasterTable();
+            showToast(res.message || `ลบรหัส ${code} เรียบร้อย`, 'success');
+          } else {
+            showToast(res?.message || 'ลบไม่สำเร็จ', 'error');
+          }
+        } catch (err) {
+          if (err.message !== 'UNAUTHORIZED') showToast('ลบข้อมูลไม่สำเร็จ', 'error');
+        }
+      });
+    }
+
+    /* ==========================================================================
+       7. MODULE 3: COVER SHEET STUDIO
+       ========================================================================== */
+    function csTodayIso() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function csIsoToDisplay(iso) {
+      if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return lockedDateDisplay;
+      const [y, m, d] = iso.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    function csNormCode(raw) {
+      let s = String(raw || '').trim();
+      if (!s) return '';
+      if (/^\d+$/.test(s)) s = s.padStart(4, '0');
+      return s;
+    }
+
+    function csLoadLocalPrefs() {
+      try {
+        const p = JSON.parse(localStorage.getItem(STORAGE.CS_PREFS) || '{}');
+        if (p.origin) {
+          document.getElementById('cs-default-origin').value = p.origin;
+          document.getElementById('cs-m-origin').value = p.origin;
+        }
+        if (p.sender) document.getElementById('cs-sender').value = p.sender;
+        if (typeof p.dup === 'boolean') {
+          app.cs.duplicatePerSheet = p.dup;
+          document.getElementById('cs-dup-toggle').checked = p.dup;
+        }
+      } catch (e) {}
+    }
+
+    function csSaveLocalPrefs() {
+      try {
+        localStorage.setItem(STORAGE.CS_PREFS, JSON.stringify({
+          origin: document.getElementById('cs-default-origin').value.trim() || '1480',
+          sender: document.getElementById('cs-sender').value.trim(),
+          dup: app.cs.duplicatePerSheet
+        }));
+      } catch (e) {}
+    }
+
+    async function csLoadModule(forceRefresh = false) {
+      if (app.cs.loading) return;
+      app.cs.loading = true;
+
+      if (!forceRefresh && !app.cs.loaded) {
+        try {
+          const cached = JSON.parse(localStorage.getItem(STORAGE.CS_CACHE) || 'null');
+          if (cached && Array.isArray(cached.branches)) {
+            csSetBranches(cached.branches);
+            if (cached.rules) csSetRules(cached.rules);
+            csRenderQueue();
+          }
+        } catch (e) {}
+      }
+
+      try {
+        const res = await callApi('cs_bootstrap', { forceRefresh });
+        if (res && res.success) {
+          app.cs.loaded = true;
+          csSetBranches(res.branches || []);
+          csSetRules(res.rules || CS_DEFAULT_RULES);
+          try { localStorage.setItem(STORAGE.CS_CACHE, JSON.stringify({ branches: app.cs.branches, rules: app.cs.rules })); } catch (e) {}
+          csRenderQueue();
+          if (res.syncQueue) applyCloudSyncPayload('coversheet', res.syncQueue, false);
+          if (forceRefresh) showToast(`อัปเดตข้อมูลสาขาเรียบร้อย (${app.cs.branches.length} สาขา)`, 'success');
+        }
+      } catch (err) {
+        if (err.message !== 'UNAUTHORIZED') showToast('โหลดข้อมูลสาขาไม่สำเร็จ: ' + err.message, 'error');
+      } finally {
+        app.cs.loading = false;
+      }
+    }
+
+    function csSetBranches(list) {
+      app.cs.branches = Array.isArray(list) ? list : [];
+      app.cs.branchMap = {};
+      const dl = document.getElementById('cs-branch-datalist');
+      dl.innerHTML = '';
+      const frag = document.createDocumentFragment();
+      app.cs.branches.forEach(b => {
+        const code = csNormCode(b.code);
+        const clean = { ...b, code };
+        app.cs.branchMap[code] = clean;
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.label = `${code} - ${clean.name}`;
+        frag.appendChild(opt);
+      });
+      dl.appendChild(frag);
+      csUpdateOriginPreview();
+      csUpdateManualDestPreview();
+    }
+
+    function csSetRules(list) {
+      app.cs.rules = (Array.isArray(list) && list.length) ? list : CS_DEFAULT_RULES;
+      const sel = document.getElementById('cs-m-type');
+      sel.innerHTML = app.cs.rules.map(r => `<option value="${escapeHtml(r.prefix)}">${escapeHtml(r.label.startsWith(r.prefix) ? r.label : r.prefix + ' - ' + r.label)}</option>`).join('');
+    }
+
+    function csSwitchInputMode(mode) {
+      const isPaste = mode === 'paste';
+      document.getElementById('cs-mode-paste').classList.toggle('hidden', !isPaste);
+      document.getElementById('cs-mode-manual').classList.toggle('hidden', isPaste);
+      document.getElementById('cs-tab-paste').className = isPaste ? 'py-2 rounded-lg text-xs font-bold bg-white text-[#cb1415] shadow-xs' : 'py-2 rounded-lg text-xs font-semibold text-slate-600';
+      document.getElementById('cs-tab-manual').className = !isPaste ? 'py-2 rounded-lg text-xs font-bold bg-white text-[#cb1415] shadow-xs' : 'py-2 rounded-lg text-xs font-semibold text-slate-600';
+    }
+
+    function csUpdateOriginPreview() {
+      const code = csNormCode(document.getElementById('cs-default-origin').value);
+      const b = app.cs.branchMap[code];
+      document.getElementById('cs-origin-preview').textContent = b ? `ต้นทาง: ${b.code} - ${b.name}` : (code ? `ไม่พบรหัส ${code} ในแท็บข้อมูล` : '');
+    }
+
+    function csUpdateManualDestPreview() {
+      const code = csNormCode(document.getElementById('cs-m-dest').value);
+      const b = app.cs.branchMap[code];
+      document.getElementById('cs-m-dest-preview').textContent = b ? `ปลายทาง: ${b.code} - ${b.name} (${b.province})` : (code ? `⚠ ไม่พบรหัส ${code} ในแท็บข้อมูล` : '');
+    }
+
+    function csOnDefaultOriginInput() {
+      document.getElementById('cs-m-origin').value = document.getElementById('cs-default-origin').value.trim();
+      csUpdateOriginPreview();
+      csSaveLocalPrefs();
+    }
+
+    function csOnSenderInput() {
+      const val = document.getElementById('cs-sender').value.trim();
+      app.cs.queue.forEach(it => { it.sender = val; });
+      csSaveLocalPrefs();
+      csRenderQueue();
+      if (app.cs.queue.length) scheduleCloudSync('coversheet', { queue: app.cs.queue });
+    }
+
+    function csOnDateChange() {
+      const dStr = csIsoToDisplay(document.getElementById('cs-date').value);
+      app.cs.queue.forEach(it => { it.dateStr = dStr; });
+      csRenderQueue();
+      if (app.cs.queue.length) scheduleCloudSync('coversheet', { queue: app.cs.queue });
+    }
+
+    function csOnDupToggle() {
+      app.cs.duplicatePerSheet = document.getElementById('cs-dup-toggle').checked;
+      csSaveLocalPrefs();
+      csRenderQueue();
+    }
+
+    function csParseTrackingCode(rawLine) {
+      const cleaned = String(rawLine || '').toUpperCase().replace(/^.*?(STS|RTJ|RTY|RTS|RTA|RTV)/, '$1').replace(/[^A-Z0-9]/g, '');
+      const m = cleaned.match(/^(STS|RTJ|RTY|RTS|RTA|RTV)(\d{1,2})(\d{2})(\d{2})(\d{2})(\d{4})(\d{4})$/);
+      if (!m) return null;
+      const boxNum = parseInt(m[2], 10);
+      return {
+        trackingNo: cleaned, prefix: m[1], boxCount: (isNaN(boxNum) || boxNum < 1) ? 1 : boxNum,
+        originCode: csNormCode(m[6]), destCode: csNormCode(m[7])
+      };
+    }
+
+    function csBuildQueueItem({ originCode, destCode, docNo, trackingNo, boxCount, sender, dateStr, destOverride }) {
+      const oCode = csNormCode(originCode || document.getElementById('cs-default-origin').value || '1480');
+      const dCode = csNormCode(destCode || '');
+      const dBranch = app.cs.branchMap[dCode] || null;
+      const info = destOverride || (dBranch || { name: '', address: '', district: '', province: '', zip: '', tel: '', mobile: '' });
+      return {
+        id: 'CS_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        originCode: oCode,
+        destCode: dCode,
+        destFound: !!(dBranch || (destOverride && destOverride.name)),
+        destName: info.name || '',
+        destAddress: info.address || '',
+        destDistrict: info.district || '',
+        destProvince: info.province || '',
+        destZip: info.zip || '',
+        destTel: info.tel || '',
+        destMobile: info.mobile || '',
+        docNo: String(docNo || '').trim(),
+        trackingNo: String(trackingNo || '').trim().toUpperCase(),
+        boxCount: Math.max(1, parseInt(boxCount, 10) || 1),
+        sender: sender != null ? sender : document.getElementById('cs-sender').value.trim(),
+        dateStr: dateStr || csIsoToDisplay(document.getElementById('cs-date').value)
+      };
+    }
+
+    function csParseSmartPaste() {
+      const box = document.getElementById('cs-smart-paste');
+      const lines = box.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      if (!lines.length) { showToast('กรุณาวางเลข Tracking หรือเลขที่เอกสารก่อน', 'error'); return; }
+
+      const added = [];
+      let i = 0;
+      while (i < lines.length) {
+        const parsed = csParseTrackingCode(lines[i]);
+        if (parsed) {
+          let docNo = '';
+          if (i + 1 < lines.length && !csParseTrackingCode(lines[i + 1])) {
+            docNo = lines[i + 1].replace(/^[^0-9A-Za-z]+/, '').trim();
+            i += 2;
+          } else {
+            i += 1;
+          }
+          added.push(csBuildQueueItem({ originCode: parsed.originCode, destCode: parsed.destCode, docNo, trackingNo: parsed.trackingNo, boxCount: parsed.boxCount }));
+        } else {
+          added.push(csBuildQueueItem({ originCode: document.getElementById('cs-default-origin').value, destCode: '', docNo: lines[i], trackingNo: '', boxCount: 1 }));
+          i += 1;
+        }
+      }
+
+      app.cs.queue.push(...added);
+      box.value = '';
+      box.focus();
+      csRenderQueue();
+      scheduleCloudSync('coversheet', { queue: app.cs.queue });
+      showToast(`เพิ่ม ${added.length} รายการเข้าคิวใบปะหน้าแล้ว`, 'success');
+    }
+
+    function csOnManualTypeChange() {
+      const rule = app.cs.rules.find(r => r.prefix === document.getElementById('cs-m-type').value);
+      if (rule && rule.defaultDest) {
+        document.getElementById('cs-m-dest').value = rule.defaultDest;
+        csUpdateManualDestPreview();
+      }
+    }
+
+    function csGenerateTrackingPreview() {
+      const prefix = document.getElementById('cs-m-type').value || 'STS';
+      const boxes = String(Math.max(1, parseInt(document.getElementById('cs-m-boxes').value, 10) || 1)).padStart(2, '0');
+      const iso = document.getElementById('cs-date').value || csTodayIso();
+      const [yyyy, mm, dd] = iso.split('-');
+      const origin = csNormCode(document.getElementById('cs-m-origin').value || document.getElementById('cs-default-origin').value || '1480');
+      const dest = csNormCode(document.getElementById('cs-m-dest').value || '0000');
+      document.getElementById('cs-m-track').value = `${prefix}${boxes}${yyyy.slice(-2)}${mm}${dd}${origin}${dest}`;
+    }
+
+    function csAddManualItem() {
+      const originCode = csNormCode(document.getElementById('cs-m-origin').value || document.getElementById('cs-default-origin').value || '1480');
+      const destCode = csNormCode(document.getElementById('cs-m-dest').value);
+      const boxCount = Math.max(1, parseInt(document.getElementById('cs-m-boxes').value, 10) || 1);
+      const docNo = document.getElementById('cs-m-doc').value.trim();
+      const trackingNo = document.getElementById('cs-m-track').value.trim().toUpperCase();
+      if (!destCode && !docNo && !trackingNo) { showToast('กรุณากรอกข้อมูลอย่างน้อย 1 ช่อง', 'error'); return; }
+
+      app.cs.queue.push(csBuildQueueItem({ originCode, destCode, docNo, trackingNo, boxCount }));
+      document.getElementById('cs-m-dest').value = '';
+      document.getElementById('cs-m-doc').value = '';
+      document.getElementById('cs-m-track').value = '';
+      document.getElementById('cs-m-boxes').value = '1';
+      csUpdateManualDestPreview();
+      csRenderQueue();
+      scheduleCloudSync('coversheet', { queue: app.cs.queue });
+      showToast('เพิ่มรายการเข้าคิวใบปะหน้าแล้ว', 'success');
+    }
+
+    function csExpandSlips(items) {
+      const slips = [];
+      items.forEach(it => {
+        const total = Math.max(1, parseInt(it.boxCount, 10) || 1);
+        for (let b = 1; b <= total; b++) {
+          const slip = { ...it, boxIndex: b, boxTotal: total };
+          slips.push(slip);
+          if (app.cs.duplicatePerSheet) slips.push({ ...slip });
+        }
+      });
+      return slips;
+    }
+
+    function csQueueSignature() {
+      return JSON.stringify(app.cs.queue.map(it => [it.originCode, it.destCode, it.docNo, it.trackingNo, it.boxCount, it.sender, it.dateStr]));
+    }
+
+    function csRenderQueue() {
+      const listEl = document.getElementById('cs-queue-list');
+      const slips = csExpandSlips(app.cs.queue);
+      const pages = Math.ceil(slips.length / 2);
+
+      document.getElementById('cs-stat-items').textContent = app.cs.queue.length;
+      document.getElementById('cs-stat-slips').textContent = slips.length;
+      document.getElementById('cs-stat-pages').textContent = pages;
+
+      const has = app.cs.queue.length > 0;
+      document.getElementById('cs-btn-save-print').disabled = !has;
+      document.getElementById('cs-btn-print-only').disabled = !has;
+      document.getElementById('cs-btn-clear').disabled = !has;
+
+      document.getElementById('cs-saved-banner').classList.toggle('hidden', !(has && app.cs.lastSavedSignature === csQueueSignature()));
+
+      if (!has) {
+        listEl.innerHTML = '<div class="text-center py-8 border-2 border-dashed border-slate-200 rounded-xl text-xs text-slate-400">ยังไม่มีรายการในคิว วางเลข Tracking + เลขเอกสารทางซ้ายได้เลย</div>';
+        csRenderPages(document.getElementById('cs-preview-wrap'), []);
+        return;
+      }
+
+      const trackCounts = {};
+      const docCounts = {};
+      app.cs.queue.forEach(it => {
+        if (it.trackingNo) trackCounts[it.trackingNo] = (trackCounts[it.trackingNo] || 0) + 1;
+        if (it.docNo) docCounts[it.docNo] = (docCounts[it.docNo] || 0) + 1;
+      });
+
+      listEl.innerHTML = app.cs.queue.map((it, idx) => {
+        const warns = [];
+        if (!it.destCode) warns.push('ยังไม่ระบุปลายทาง');
+        else if (!it.destFound) warns.push('ไม่พบรหัสสาขาในชีต');
+        if (!it.docNo) warns.push('ไม่มีเลขเอกสาร');
+        if (!it.trackingNo) warns.push('ไม่มี Tracking');
+        const isDup = (it.trackingNo && trackCounts[it.trackingNo] > 1) || (it.docNo && docCounts[it.docNo] > 1);
+        if (isDup) warns.push('พบเลขซ้ำในคิว');
+        const borderCls = isDup ? 'border-red-400 bg-red-50/40' : (warns.length ? 'border-amber-400 bg-amber-50/40' : 'border-slate-200 bg-white');
+        const boxTxt = it.boxCount > 1 ? `1/${it.boxCount} - ${it.boxCount}/${it.boxCount}` : '1/1';
+        return `
+          <div class="rounded-xl border p-3 flex items-start justify-between gap-2 ${borderCls}">
+            <div class="min-w-0 flex-1 space-y-1">
+              <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+                <span class="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">#${idx + 1}</span>
+                <span class="px-2 py-0.5 rounded-full bg-[#FBE4D5] text-amber-900">${escapeHtml(it.originCode)} → ${escapeHtml(it.destCode || '?')}</span>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">กล่อง ${boxTxt}</span>
+                ${warns.map(w => `<span class="px-2 py-0.5 rounded-full ${w.includes('ซ้ำ') ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}">⚠ ${escapeHtml(w)}</span>`).join('')}
+              </div>
+              <div class="text-xs text-slate-700 truncate"><strong>ปลายทาง:</strong> ${escapeHtml(it.destName || (it.destCode ? 'คลัง ' + it.destCode : '-'))}</div>
+              <div class="text-[11px] text-slate-500 font-mono truncate"><strong>ใบโอนฯ:</strong> ${escapeHtml(it.docNo || '-')} | <strong>Track:</strong> ${escapeHtml(it.trackingNo || '-')}</div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button onclick="csOpenEditModal('${it.id}')" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-[11px] font-bold text-slate-700 hover:bg-slate-50">แก้ไข</button>
+              <button onclick="csRemoveQueueItem('${it.id}')" class="px-2.5 py-1 rounded-lg bg-red-50 border border-red-200 text-[11px] font-bold text-[#cb1415]">ลบ</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      csRenderPages(document.getElementById('cs-preview-wrap'), slips);
+    }
+
+    function csRemoveQueueItem(id) {
+      app.cs.queue = app.cs.queue.filter(it => it.id !== id);
+      csRenderQueue();
+      scheduleCloudSync('coversheet', { queue: app.cs.queue }, true);
+      showToast('ลบรายการออกจากคิวแล้ว', 'info');
+    }
+
+    function csConfirmClearQueue() {
+      if (!app.cs.queue.length) return;
+      showConfirmModal('ล้างคิวใบปะหน้า', 'ต้องการล้างรายการทั้งหมดในคิวพิมพ์ใช่หรือไม่? (จะซิงค์ล้างทุกเครื่อง)', (ok) => {
+        if (!ok) return;
+        app.cs.queue = [];
+        app.cs.lastSavedSignature = '';
+        csRenderQueue();
+        scheduleCloudSync('coversheet', { queue: [] }, true);
+        showToast('ล้างคิวใบปะหน้าเรียบร้อย', 'info');
+      });
+    }
+
+    function csTogglePreview() {
+      app.cs.previewVisible = !app.cs.previewVisible;
+      document.getElementById('cs-preview-wrap').classList.toggle('hidden', !app.cs.previewVisible);
+    }
+
+    function csBuildSlipHtml(slip) {
+      const origin = app.cs.branchMap[csNormCode(slip.originCode)] || { code: slip.originCode || '', name: '', address: '', district: '', province: '', zip: '', tel: '', mobile: '' };
+      const senderText = slip.sender ? `ผู้ส่ง..........${escapeHtml(slip.sender)}..........` : 'ผู้ส่ง........................................';
+      return `
+        <table class="slip-table">
+          <colgroup>
+            <col class="c-a"/><col class="c-b"/><col class="c-c"/><col class="c-d"/>
+            <col class="c-e"/><col class="c-f"/><col class="c-g"/><col class="c-h"/>
+            <col class="c-i"/><col class="c-j"/><col class="c-k"/>
+          </colgroup>
+          <tbody>
+            <tr><td colspan="8">สาขาที่ส่ง (ต้นทาง)</td><td colspan="3" rowspan="2" class="box-cell">กล่องที่ &nbsp;${slip.boxIndex} / ${slip.boxTotal}</td></tr>
+            <tr><td>คลัง</td><td class="bg-peach">${escapeHtml(slip.originCode)}</td><td>สาขา</td><td colspan="5">${escapeHtml(origin.name)}</td></tr>
+            <tr><td rowspan="2">ที่ตั้ง</td><td colspan="10" class="addr-cell">${escapeHtml(origin.address)}</td></tr>
+            <tr><td>อำเภอ</td><td colspan="3">${escapeHtml(origin.district)}</td><td colspan="2">จังหวัด</td><td colspan="4">${escapeHtml(origin.province)}</td></tr>
+            <tr><td colspan="2">รหัสไปรษณีย์</td><td colspan="2">${escapeHtml(origin.zip)}</td><td class="label-sm">เบอร์โทร</td><td colspan="2">${escapeHtml(origin.tel)}</td><td>มือถือ</td><td colspan="3">${escapeHtml(origin.mobile)}</td></tr>
+            <tr><td colspan="4" class="bg-peach">เลขที่เอกสาร (ใบโอนฯ) :</td><td colspan="7" class="bg-peach big-val">${escapeHtml(slip.docNo)}</td></tr>
+            <tr><td colspan="4" class="bg-peach">Tracking No. (ใน E-Office) STS / RTV :</td><td colspan="7" class="bg-peach big-val">${escapeHtml(slip.trackingNo)}</td></tr>
+            <tr class="spacer-row"><td colspan="11"></td></tr>
+            <tr class="sender-row"><td colspan="7" class="sender-name">${senderText}</td><td class="date-label">วันที่ ...</td><td colspan="3" class="date-val">${escapeHtml(slip.dateStr)}</td></tr>
+            <tr class="spacer-row"><td colspan="11"></td></tr>
+            <tr><td colspan="11">สาขาที่รับ (ปลายทาง)</td></tr>
+            <tr><td>คลัง</td><td class="bg-peach">${escapeHtml(slip.destCode)}</td><td>สาขา</td><td colspan="8">${escapeHtml(slip.destName)}</td></tr>
+            <tr><td rowspan="2">ที่ตั้ง</td><td colspan="10" class="addr-cell">${escapeHtml(slip.destAddress)}</td></tr>
+            <tr><td>อำเภอ</td><td colspan="3">${escapeHtml(slip.destDistrict)}</td><td colspan="2">จังหวัด</td><td colspan="4">${escapeHtml(slip.destProvince)}</td></tr>
+            <tr><td colspan="2">รหัสไปรษณีย์</td><td colspan="2">${escapeHtml(slip.destZip)}</td><td class="label-sm">เบอร์โทร</td><td colspan="2">${escapeHtml(slip.destTel)}</td><td>มือถือ</td><td colspan="3">${escapeHtml(slip.destMobile)}</td></tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function csRenderPages(container, slips) {
+      if (!slips.length) {
+        container.innerHTML = '<div class="text-slate-500 py-6 text-xs font-semibold">ตัวอย่างแผ่น A4 จะแสดงที่นี่เมื่อมีรายการในคิว</div>';
+        return;
+      }
+      let html = '';
+      for (let i = 0; i < slips.length; i += 2) {
+        const top = slips[i];
+        const bottom = slips[i + 1] || null;
+        html += `
+          <div class="a4-page">
+            <div class="slip-slot">${csBuildSlipHtml(top)}</div>
+            <div class="cut-line"><span>✂ รอยตัดแบ่งครึ่งแผ่น A4</span></div>
+            <div class="slip-slot">${bottom ? csBuildSlipHtml(bottom) : ''}</div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function csTriggerPrintSlips(slips) {
+      csRenderPages(document.getElementById('print-area-coversheet'), slips);
+      runScopedPrint('coversheet');
+    }
+
+    function csPrintOnly() {
+      if (!app.cs.queue.length) return;
+      csTriggerPrintSlips(csExpandSlips(app.cs.queue));
+    }
+
+    async function csSaveAndPrintQueue() {
+      if (!app.cs.queue.length) return;
+      const sig = csQueueSignature();
+      const slips = csExpandSlips(app.cs.queue);
+      if (app.cs.lastSavedSignature === sig) {
+        csTriggerPrintSlips(slips);
+        return;
+      }
+
+      const btn = document.getElementById('cs-btn-save-print');
+      btn.disabled = true;
+      btn.textContent = 'กำลังบันทึก...';
+
+      const payloadItems = app.cs.queue.map(it => {
+        const origin = app.cs.branchMap[csNormCode(it.originCode)] || {};
+        return {
+          dateStr: it.dateStr, sender: it.sender, originCode: it.originCode, originName: origin.name || '',
+          destCode: it.destCode, destName: it.destName, destAddress: it.destAddress, destDistrict: it.destDistrict,
+          destProvince: it.destProvince, destZip: it.destZip, destTel: it.destTel, destMobile: it.destMobile,
+          docNo: it.docNo, trackingNo: it.trackingNo, boxCount: it.boxCount
+        };
+      });
+
+      try {
+        const res = await callApi('cs_saveBatch', { items: payloadItems });
+        if (res && res.success) {
+          app.cs.lastSavedSignature = sig;
+          csRenderQueue();
+          showToast(`บันทึกใบปะหน้า ${payloadItems.length} รายการลงชีตเรียบร้อย`, 'success');
+          csTriggerPrintSlips(slips);
+        } else {
+          showToast(res?.message || 'บันทึกไม่สำเร็จ', 'error');
+        }
+      } catch (err) {
+        if (err.message !== 'UNAUTHORIZED') showToast('บันทึกไม่สำเร็จ: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 บันทึก & พิมพ์ A4';
+      }
+    }
+
+    function csOpenEditModal(id) {
+      const it = app.cs.queue.find(x => x.id === id);
+      if (!it) return;
+      document.getElementById('cs-e-id').value = it.id;
+      document.getElementById('cs-e-origin').value = it.originCode;
+      document.getElementById('cs-e-dest').value = it.destCode;
+      document.getElementById('cs-e-boxes').value = it.boxCount;
+      document.getElementById('cs-e-doc').value = it.docNo;
+      document.getElementById('cs-e-track').value = it.trackingNo;
+      document.getElementById('cs-e-sender').value = it.sender;
+      document.getElementById('cs-e-date').value = it.dateStr;
+      document.getElementById('cs-e-dest-name').value = it.destName;
+      document.getElementById('cs-e-dest-addr').value = it.destAddress;
+      document.getElementById('cs-e-dest-dist').value = it.destDistrict;
+      document.getElementById('cs-e-dest-prov').value = it.destProvince;
+      document.getElementById('cs-e-dest-zip').value = it.destZip;
+      document.getElementById('cs-e-dest-tel').value = it.destTel;
+      document.getElementById('cs-e-dest-mob').value = it.destMobile;
+      document.getElementById('cs-modal-edit').classList.remove('hidden');
+    }
+
+    function csFillDestInModal() {
+      const code = csNormCode(document.getElementById('cs-e-dest').value);
+      const b = app.cs.branchMap[code];
+      if (!b) return;
+      document.getElementById('cs-e-dest-name').value = b.name;
+      document.getElementById('cs-e-dest-addr').value = b.address;
+      document.getElementById('cs-e-dest-dist').value = b.district;
+      document.getElementById('cs-e-dest-prov').value = b.province;
+      document.getElementById('cs-e-dest-zip').value = b.zip;
+      document.getElementById('cs-e-dest-tel').value = b.tel;
+      document.getElementById('cs-e-dest-mob').value = b.mobile;
+    }
+
+    function csCloseEditModal() { document.getElementById('cs-modal-edit').classList.add('hidden'); }
+
+    function csSaveEditModal() {
+      const id = document.getElementById('cs-e-id').value;
+      const idx = app.cs.queue.findIndex(x => x.id === id);
+      if (idx === -1) return;
+      const dCode = csNormCode(document.getElementById('cs-e-dest').value);
+      const dName = document.getElementById('cs-e-dest-name').value.trim();
+      app.cs.queue[idx] = {
+        ...app.cs.queue[idx],
+        originCode: csNormCode(document.getElementById('cs-e-origin').value),
+        destCode: dCode,
+        destFound: !!(app.cs.branchMap[dCode] || dName),
+        boxCount: Math.max(1, parseInt(document.getElementById('cs-e-boxes').value, 10) || 1),
+        docNo: document.getElementById('cs-e-doc').value.trim(),
+        trackingNo: document.getElementById('cs-e-track').value.trim().toUpperCase(),
+        sender: document.getElementById('cs-e-sender').value.trim(),
+        dateStr: document.getElementById('cs-e-date').value.trim(),
+        destName: dName,
+        destAddress: document.getElementById('cs-e-dest-addr').value.trim(),
+        destDistrict: document.getElementById('cs-e-dest-dist').value.trim(),
+        destProvince: document.getElementById('cs-e-dest-prov').value.trim(),
+        destZip: document.getElementById('cs-e-dest-zip').value.trim(),
+        destTel: document.getElementById('cs-e-dest-tel').value.trim(),
+        destMobile: document.getElementById('cs-e-dest-mob').value.trim()
+      };
+      csCloseEditModal();
+      csRenderQueue();
+      scheduleCloudSync('coversheet', { queue: app.cs.queue });
+      showToast('บันทึกการแก้ไขใบปะหน้าเรียบร้อย', 'success');
+    }
+
+    async function csLoadHistory() {
+      const q = document.getElementById('cs-history-search').value.trim();
+      document.getElementById('cs-history-status').textContent = 'กำลังโหลดประวัติ...';
+      app.cs.selectedLogKeys.clear();
+      csUpdateReprintBtn();
+
+      try {
+        const res = await callApi('cs_getLogs', { query: q, limit: 200 });
+        if (res && res.success) {
+          app.cs.logs = res.logs || [];
+          csRenderHistoryTable();
+        }
+      } catch (err) {
+        if (err.message !== 'UNAUTHORIZED') {
+          document.getElementById('cs-history-status').textContent = 'โหลดประวัติไม่สำเร็จ: ' + err.message;
+        }
+      }
+    }
+
+    function csRenderHistoryTable() {
+      const tbody = document.getElementById('cs-history-tbody');
+      document.getElementById('cs-select-all-logs').checked = false;
+      if (!app.cs.logs.length) {
+        document.getElementById('cs-history-status').textContent = 'ไม่พบประวัติการออกใบปะหน้า';
+        tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400">ยังไม่มีข้อมูลประวัติ</td></tr>';
+        return;
+      }
+      document.getElementById('cs-history-status').textContent = `แสดง ${app.cs.logs.length} รายการล่าสุด`;
+      tbody.innerHTML = app.cs.logs.map((r, i) => `
+        <tr class="hover:bg-red-50/40">
+          <td class="p-3"><input type="checkbox" class="cs-log-check" data-idx="${i}" onchange="csOnLogCheckChange(${i}, this.checked)" /></td>
+          <td class="p-3 whitespace-nowrap text-slate-500">${escapeHtml(r.savedAt)}</td>
+          <td class="p-3 whitespace-nowrap">${escapeHtml(r.dateStr)}</td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded-full bg-[#FBE4D5] text-amber-900 font-bold text-[11px]">${escapeHtml(r.originCode)} → ${escapeHtml(r.destCode)}</span>
+            <div class="text-slate-700 mt-0.5">${escapeHtml(r.destName || '-')}</div>
+          </td>
+          <td class="p-3 font-mono font-bold">${escapeHtml(r.docNo || '-')}</td>
+          <td class="p-3 font-mono font-bold">${escapeHtml(r.trackingNo || '-')}</td>
+          <td class="p-3 font-bold">${escapeHtml(r.boxCount)}</td>
+          <td class="p-3">${escapeHtml(r.sender || '-')}</td>
+          <td class="p-3 text-right"><button onclick="csReprintSingle(${i})" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 font-bold">พิมพ์ซ้ำ</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function csOnLogCheckChange(idx, checked) {
+      if (checked) app.cs.selectedLogKeys.add(idx);
+      else app.cs.selectedLogKeys.delete(idx);
+      csUpdateReprintBtn();
+    }
+
+    function csToggleSelectAllLogs(checked) {
+      app.cs.selectedLogKeys.clear();
+      document.querySelectorAll('.cs-log-check').forEach(cb => {
+        cb.checked = checked;
+        if (checked) app.cs.selectedLogKeys.add(Number(cb.dataset.idx));
+      });
+      csUpdateReprintBtn();
+    }
+
+    function csUpdateReprintBtn() {
+      const n = app.cs.selectedLogKeys.size;
+      const btn = document.getElementById('cs-btn-reprint-selected');
+      btn.disabled = n === 0;
+      btn.textContent = `🖨️ พิมพ์ซ้ำที่เลือก (${n})`;
+    }
+
+    function csLogToSlip(log) {
+      const dCode = csNormCode(log.destCode);
+      const b = app.cs.branchMap[dCode];
+      return csBuildQueueItem({
+        originCode: log.originCode, destCode: dCode, docNo: log.docNo, trackingNo: log.trackingNo,
+        boxCount: log.boxCount, sender: log.sender, dateStr: log.dateStr,
+        destOverride: {
+          name: log.destName || (b ? b.name : ''), address: log.destAddress || (b ? b.address : ''),
+          district: log.destDistrict || (b ? b.district : ''), province: log.destProvince || (b ? b.province : ''),
+          zip: log.destZip || (b ? b.zip : ''), tel: log.destTel || (b ? b.tel : ''), mobile: log.destMobile || (b ? b.mobile : '')
+        }
+      });
+    }
+
+    function csReprintSingle(idx) {
+      const log = app.cs.logs[idx];
+      if (!log) return;
+      csTriggerPrintSlips(csExpandSlips([csLogToSlip(log)]));
+    }
+
+    function csReprintSelected() {
+      const items = Array.from(app.cs.selectedLogKeys).sort((a, b) => a - b).map(i => app.cs.logs[i]).filter(Boolean).map(csLogToSlip);
+      if (!items.length) return;
+      csTriggerPrintSlips(csExpandSlips(items));
+    }
+
+    /* ==========================================================================
+       8. SHARED UTILITIES: BOTTOM-RIGHT TOAST, CONFIRM MODAL, MODAL SHAKE
+       ========================================================================== */
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const styles = {
+        success: 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-600/25',
+        error:   'bg-rose-600 text-white border-rose-500 shadow-rose-600/25',
+        warning: 'bg-amber-500 text-white border-amber-400 shadow-amber-500/25',
+        info:    'bg-slate-900 text-white border-slate-700 shadow-slate-900/25'
+      };
+      const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+
+      const toast = document.createElement('div');
+      toast.className = `px-4 py-3 rounded-xl border text-xs font-semibold shadow-xl pointer-events-auto flex items-center justify-between gap-3 transform transition-all duration-200 translate-y-3 opacity-0 ${styles[type] || styles.info}`;
+      toast.innerHTML = `
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0 font-bold text-[11px]">${icons[type] || 'ℹ'}</span>
+          <span class="leading-snug break-words">${escapeHtml(message)}</span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-white/75 hover:text-white font-bold text-xs px-1 shrink-0" aria-label="ปิด">✕</button>
+      `;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => toast.classList.remove('translate-y-3', 'opacity-0'));
+
+      setTimeout(() => {
+        if (!toast.parentElement) return;
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 220);
+      }, 3500);
+    }
+
+    function showConfirmModal(title, desc, callback) {
+      app.confirmCallback = callback;
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-desc').textContent = desc;
+      document.getElementById('modal-confirm').classList.remove('hidden');
+    }
+
+    function closeConfirmModal(result) {
+      document.getElementById('modal-confirm').classList.add('hidden');
+      if (app.confirmCallback) {
+        const cb = app.confirmCallback;
+        app.confirmCallback = null;
+        cb(result);
+      }
+    }
+
+    function initModalShakeAndScrollLock() {
+      const ids = ['pin-lock-screen', 'bc-modal-item', 'bc-modal-qty', 'bc-modal-preview', 'lp-modal-item', 'cs-modal-edit', 'modal-confirm'];
+      const updateScroll = () => {
+        const anyOpen = ids.some(id => {
+          const el = document.getElementById(id);
+          return el && !el.classList.contains('hidden');
+        });
+        document.body.classList.toggle('overflow-hidden', anyOpen);
+      };
+      const obs = new MutationObserver(updateScroll);
+      ids.forEach(id => {
+        const m = document.getElementById(id);
+        if (!m) return;
+        obs.observe(m, { attributes: true, attributeFilter: ['class'] });
+        m.addEventListener('click', (e) => {
+          if (e.target === m && m.firstElementChild) {
+            m.firstElementChild.classList.remove('animate-shake');
+            void m.firstElementChild.offsetWidth;
+            m.firstElementChild.classList.add('animate-shake');
+            setTimeout(() => m.firstElementChild.classList.remove('animate-shake'), 380);
+          }
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      if (text === null || text === undefined) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
 </body>
 </html>
